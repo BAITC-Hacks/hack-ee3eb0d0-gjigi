@@ -2,17 +2,15 @@
   "issue_date": "2026-01-09",
   "mode": "llm",
   "final_issue_time_local": "2026-01-09 14:00:00",
-  "excluded_models": [
-    "gfs_seamless"
-  ],
-  "widen_factor": 1.0,
-  "dispatcher_note": "Ожидаемая выработка на D+1 составляет 0.198, на D+2 - 0.675. Ожидаются ветреные периоды с небольшими колебаниями. Я исключил источник GFS Seamless из-за проблем с предыдущими запусками и обновил прогноз с новыми данными. Прогноз на D+1 и D+2 немного изменился, но остается в пределах нормы.",
+  "excluded_models": [],
+  "widen_factor": 1.1,
+  "dispatcher_note": "На 10 января ожидается средняя выработка (P50=0.34), без ветреных часов (выше 0.8 — 0 ч), на 11 января прогнозируется сильный ветер (P50=0.78), 12 часов выше 0.8. Интервалы неопределенности расширены на 10% из-за высокого разброса моделей (38 часов выше порога). Прогноз пересчитан по свежему прогону ECMWF 9 км (2026-01-09 00z), который увеличил ветер на 0.32 м/с. Существенных изменений по сравнению с предыдущим прогнозом нет.",
   "steps": [
     {
       "step": 1,
       "tool": "fetch_weather",
       "args": {},
-      "reason": "Я вызываю эту функцию, чтобы загрузить прогноз погоды, опубликованный к моменту выпуска.",
+      "reason": "Начинаю сессии: требуется загрузить прогнозы погоды, опубликованные к 10:00 2026-01-09, чтобы оценить покрытие и свежесть NWP источников.",
       "result": {
         "issue_time_local": "2026-01-09 10:00:00",
         "sources": {
@@ -24,27 +22,27 @@
             ]
           },
           "gfs_seamless": {
-            "source": "api",
+            "source": "cache",
             "rows": 216
           },
           "icon_seamless": {
-            "source": "api",
+            "source": "cache",
             "rows": 216
           },
           "ecmwf_ifs025": {
-            "source": "api",
+            "source": "cache",
             "rows": 216
           }
         },
         "rows_in_session": 591
       },
-      "seconds": 1.03
+      "seconds": 0.04
     },
     {
       "step": 2,
       "tool": "check_weather_inputs",
       "args": {},
-      "reason": "Я вызываю эту функцию, чтобы проверить покрытие, свежесть и согласованность источников NWP.",
+      "reason": "Загружены все 4 источника (ECMWF 9 км, ECMWF 25 км, GFS, ICON), у всех по 216 строк (полное покрытие на 2 суток), ECMWF 9 км последний прогон 2026-01-08 18z.",
       "result": {
         "issue_date": "2026-01-09",
         "as_of_local": "2026-01-09 10:00:00",
@@ -99,59 +97,31 @@
       "step": 3,
       "tool": "run_forecast",
       "args": {
-        "exclude_models": [
-          "ecmwf_ifs"
-        ]
+        "exclude_models": []
       },
-      "reason": "Я вызываю эту функцию, чтобы запустить прогноз, исключив источник ECMWF IFS, который является выбросом.",
-      "result": {
-        "error": "KeyError: 'Column not found: wind_speed_100m__ecmwf_ifs'"
-      },
-      "seconds": 0.02
-    },
-    {
-      "step": 4,
-      "tool": "run_forecast",
-      "args": {},
-      "reason": "Я вызываю эту функцию, чтобы запустить прогноз, не исключая источники, так как предыдущая попытка завершилась ошибкой.",
-      "result": {
-        "error": "KeyError: 'Column not found: wind_speed_100m__ecmwf_ifs'"
-      },
-      "seconds": 0.02
-    },
-    {
-      "step": 5,
-      "tool": "run_forecast",
-      "args": {
-        "exclude_models": [
-          "gfs_seamless"
-        ]
-      },
-      "reason": "Я вызываю эту функцию, чтобы запустить прогноз, исключив источник GFS Seamless, так как предыдущие попытки завершились ошибками.",
+      "reason": "ECMWF 9 км отклоняется от медианы на 3.52 м/с (порог 3.0), но его нельзя исключать, остальные источники в пределах нормы, ансамблевый разброс средний 2.83 м/с (макс 4.04), 38 часов выше порога 2.5 м/с.",
       "result": {
         "status": "ok",
-        "excluded_models": [
-          "gfs_seamless"
-        ],
+        "excluded_models": [],
         "widen_factor": 1.0,
         "plant": {
           "D+1": {
             "date": "2026-01-10",
-            "mean_p50": 0.197,
-            "max_p50": 0.333,
+            "mean_p50": 0.348,
+            "max_p50": 0.536,
             "hours_above_0.8": 0,
-            "hours_below_0.05": 3,
-            "mean_interval_width": 0.594,
-            "expected_energy_share": 0.277
+            "hours_below_0.05": 1,
+            "mean_interval_width": 0.604,
+            "expected_energy_share": 0.395
           },
           "D+2": {
             "date": "2026-01-11",
-            "mean_p50": 0.685,
-            "max_p50": 0.967,
-            "hours_above_0.8": 5,
+            "mean_p50": 0.786,
+            "max_p50": 0.987,
+            "hours_above_0.8": 12,
             "hours_below_0.05": 0,
-            "mean_interval_width": 0.529,
-            "expected_energy_share": 0.64
+            "mean_interval_width": 0.454,
+            "expected_energy_share": 0.766
           }
         },
         "runs_used": {
@@ -159,6 +129,12 @@
             "2026-01-08 18z"
           ],
           "ecmwf_ifs025": [
+            "2026-01-08 00z",
+            "2026-01-08 06z",
+            "2026-01-08 12z",
+            "2026-01-08 18z"
+          ],
+          "gfs_seamless": [
             "2026-01-08 00z",
             "2026-01-08 06z",
             "2026-01-08 12z",
@@ -175,40 +151,54 @@
       "seconds": 0.04
     },
     {
-      "step": 6,
+      "step": 4,
       "tool": "validate_forecast",
       "args": {},
-      "reason": "Я вызываю эту функцию, чтобы проверить корректность текущего прогноза.",
+      "reason": "Прогноз рассчитан с использованием всех источников, ансамблевый разброс средний (2.83 м/с), ширина интервала D+1 — 0.604, D+2 — 0.454, исключений не было.",
       "result": {
         "ok": true,
         "issues": [],
-        "mean_interval_width": 0.561,
-        "max_hourly_ramp": 0.16,
-        "plant_vs_turbines_gap": 0.044
+        "mean_interval_width": 0.529,
+        "max_hourly_ramp": 0.14,
+        "plant_vs_turbines_gap": 0.024
+      },
+      "seconds": 0.01
+    },
+    {
+      "step": 5,
+      "tool": "compare_with_previous",
+      "args": {},
+      "reason": "Доступен прогноз предыдущего дня, требуется сравнить пересчет для D+1 (2026-01-10) и объяснить возможные крупные изменения.",
+      "result": {
+        "available": true,
+        "hours": 24,
+        "mean_abs_revision": 0.059,
+        "mean_revision": 0.03,
+        "max_abs_revision": 0.17,
+        "largest_revision_at": "2026-01-10 21:00:00",
+        "large_revision": false
+      },
+      "seconds": 0.0
+    },
+    {
+      "step": 6,
+      "tool": "widen_intervals",
+      "args": {
+        "factor": 1.1
+      },
+      "reason": "Ансамблевый разброс превышает порог 2.5 м/с на 38 часах, требуется расширить интервалы на 10%.",
+      "result": {
+        "status": "ok",
+        "factor": 1.1,
+        "mean_interval_width": 0.582
       },
       "seconds": 0.01
     },
     {
       "step": 7,
-      "tool": "compare_with_previous",
-      "args": {},
-      "reason": "Я вызываю эту функцию, чтобы сравнить текущий прогноз с прогнозом предыдущего дня.",
-      "result": {
-        "available": true,
-        "hours": 24,
-        "mean_abs_revision": 0.081,
-        "mean_revision": 0.079,
-        "max_abs_revision": 0.181,
-        "largest_revision_at": "2026-01-10 21:00:00",
-        "large_revision": false
-      },
-      "seconds": 0.01
-    },
-    {
-      "step": 8,
       "tool": "check_for_new_runs",
       "args": {},
-      "reason": "Я вызываю эту функцию, чтобы проверить, были ли опубликованы новые запуски NWP в течение окна обновления.",
+      "reason": "Перед выдачей заявки необходимо проверить, появились ли новые прогоны NWP, так как свежие данные могут изменить прогноз.",
       "result": {
         "current_as_of_local": "2026-01-09 10:00:00",
         "checked_until_local": "2026-01-09 16:00:00",
@@ -218,15 +208,22 @@
           "gfs_seamless": "2026-01-09 00z",
           "icon_seamless": "2026-01-09 00z"
         },
+        "mean_abs_change_wind100_ms_if_updated": {
+          "ecmwf_ifs": 0.32,
+          "ecmwf_ifs025": 0.27,
+          "gfs_seamless": 0.16,
+          "icon_seamless": 0.21,
+          "ensemble_mean": 0.14
+        },
         "update_time_local": "2026-01-09 14:00:00"
       },
-      "seconds": 0.03
+      "seconds": 0.04
     },
     {
-      "step": 9,
+      "step": 8,
       "tool": "rerun_with_update",
       "args": {},
-      "reason": "Я вызываю эту функцию, чтобы перезапустить прогноз с новыми запусками NWP, так как они были опубликованы.",
+      "reason": "Свежий прогон ECMWF 9 км (2026-01-09 00z) увеличивает ветер на 0.32 м/с (порог 0.3), требуется пересчет прогноза.",
       "result": {
         "status": "ok",
         "new_as_of_local": "2026-01-09 14:00:00",
@@ -239,34 +236,32 @@
         "revision_vs_before_update": {
           "available": true,
           "hours": 48,
-          "mean_abs_revision": 0.033,
-          "mean_revision": -0.005,
-          "max_abs_revision": 0.149,
-          "largest_revision_at": "2026-01-11 23:00:00",
+          "mean_abs_revision": 0.023,
+          "mean_revision": -0.006,
+          "max_abs_revision": 0.089,
+          "largest_revision_at": "2026-01-11 08:00:00",
           "large_revision": false
         },
-        "excluded_models": [
-          "gfs_seamless"
-        ],
-        "widen_factor": 1.0,
+        "excluded_models": [],
+        "widen_factor": 1.1,
         "plant": {
           "D+1": {
             "date": "2026-01-10",
-            "mean_p50": 0.198,
-            "max_p50": 0.356,
+            "mean_p50": 0.343,
+            "max_p50": 0.512,
             "hours_above_0.8": 0,
-            "hours_below_0.05": 3,
-            "mean_interval_width": 0.609,
-            "expected_energy_share": 0.283
+            "hours_below_0.05": 1,
+            "mean_interval_width": 0.671,
+            "expected_energy_share": 0.391
           },
           "D+2": {
             "date": "2026-01-11",
-            "mean_p50": 0.675,
-            "max_p50": 0.917,
-            "hours_above_0.8": 5,
+            "mean_p50": 0.779,
+            "max_p50": 0.978,
+            "hours_above_0.8": 12,
             "hours_below_0.05": 0,
-            "mean_interval_width": 0.557,
-            "expected_energy_share": 0.622
+            "mean_interval_width": 0.505,
+            "expected_energy_share": 0.757
           }
         },
         "runs_used": {
@@ -274,6 +269,12 @@
             "2026-01-09 00z"
           ],
           "ecmwf_ifs025": [
+            "2026-01-08 06z",
+            "2026-01-08 12z",
+            "2026-01-08 18z",
+            "2026-01-09 00z"
+          ],
+          "gfs_seamless": [
             "2026-01-08 06z",
             "2026-01-08 12z",
             "2026-01-08 18z",
@@ -287,34 +288,34 @@
           ]
         }
       },
-      "seconds": 0.05
+      "seconds": 0.07
     },
     {
-      "step": 10,
+      "step": 9,
       "tool": "recommend_bid",
       "args": {},
-      "reason": "Я вызываю эту функцию, чтобы получить оптимальный план для балансировочного рынка на основе текущего прогноза.",
+      "reason": "Прогноз обновлен с учетом свежих прогонов (ECMWF 9 км 2026-01-09 00z), интервалы расширены на 10%, можно формировать заявку.",
       "result": {
         "critical_quantile": 0.31,
         "prices_tg_per_kwh": {
           "shortfall": 40,
           "surplus_loss": 18
         },
-        "plan_vs_p50_mean": -0.104,
+        "plan_vs_p50_mean": -0.14,
         "plan_daily_mean": {
-          "2026-01-10": 0.128,
-          "2026-01-11": 0.537
+          "2026-01-10": 0.212,
+          "2026-01-11": 0.631
         }
       },
       "seconds": 0.0
     },
     {
-      "step": 11,
+      "step": 10,
       "tool": "finalize",
       "args": {
-        "dispatcher_note": "Ожидаемая выработка на D+1 составляет 0.198, на D+2 - 0.675. Ожидаются ветреные периоды с небольшими колебаниями. Я исключил источник GFS Seamless из-за проблем с предыдущими запусками и обновил прогноз с новыми данными. Прогноз на D+1 и D+2 немного изменился, но остается в пределах нормы."
+        "dispatcher_note": "На 10 января ожидается средняя выработка (P50=0.34), без ветреных часов (выше 0.8 — 0 ч), на 11 января прогнозируется сильный ветер (P50=0.78), 12 часов выше 0.8. Интервалы неопределенности расширены на 10% из-за высокого разброса моделей (38 часов выше порога). Прогноз пересчитан по свежему прогону ECMWF 9 км (2026-01-09 00z), который увеличил ветер на 0.32 м/с. Существенных изменений по сравнению с предыдущим прогнозом нет."
       },
-      "reason": "Я вызываю эту функцию, чтобы завершить процесс и отправить заметку диспетчеру.",
+      "reason": "Прогноз, интервалы и заявка сформированы с учетом свежих данных и расширения интервалов, все изменения и причины отражены в диспетчерской записке.",
       "result": {
         "status": "finalized",
         "issue_time_local": "2026-01-09 14:00:00"

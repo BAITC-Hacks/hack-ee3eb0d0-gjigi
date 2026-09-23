@@ -200,9 +200,21 @@ def check_for_new_runs(s: ForecastSession, hours_later: float = 6) -> dict:
     t_new = s.as_of_utc + pd.Timedelta(hours=hours_later)
     pub = s.store[(s.store["available_at"] > s.as_of_utc) & (s.store["available_at"] <= t_new)]
     new = pub.groupby("model")["init_time"].max()
+    change = {}
+    if len(new):
+        # preview: how much would the weather inputs change with the fresher runs?
+        t_pub = pub["available_at"].max()
+        a = issued_forecasts([s.issue_date], s.store, as_of_utc=s.as_of_utc)
+        b = issued_forecasts([s.issue_date], s.store, as_of_utc=t_pub)
+        a = a[a["is_target"]].pivot_table(index="time_local", columns="model", values="wind_speed_100m")
+        b = b[b["is_target"]].pivot_table(index="time_local", columns="model", values="wind_speed_100m")
+        for m in a.columns.intersection(b.columns):
+            change[m] = round(float((b[m] - a[m]).abs().mean()), 2)
+        change["ensemble_mean"] = round(float((b.mean(axis=1) - a.mean(axis=1)).abs().mean()), 2)
     return {"current_as_of_local": str(utc_to_local(s.as_of_utc)),
             "checked_until_local": str(utc_to_local(t_new)),
             "new_runs": {m: f"{t:%Y-%m-%d %H}z" for m, t in new.items()},
+            "mean_abs_change_wind100_ms_if_updated": change,
             "update_time_local": str(utc_to_local(pub["available_at"].max())) if len(pub) else None}
 
 
