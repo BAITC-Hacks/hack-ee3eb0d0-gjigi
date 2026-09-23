@@ -38,7 +38,7 @@ forecast:
 # SCADA timestamps are local time with a FIXED offset from UTC (no jump at the
 # 2024-03-01 Kazakhstan time-zone change, see outputs/eda/EDA.md).
 # Value confirmed in stage 1 by cross-correlation with NWP (outputs/weather/).
-scada_utc_offset_h: 5
+scada_utc_offset_h: 6
 
 weather:
   # Plant centroid; both turbines (~350 m apart) fall into the same NWP grid cell.

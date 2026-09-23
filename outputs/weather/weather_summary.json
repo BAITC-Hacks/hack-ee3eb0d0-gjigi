@@ -1,0 +1,213 @@
+{
+  "store": {
+    "ecmwf_ifs": {
+      "rows": 200773,
+      "runs": 2575,
+      "first_valid": "2024-03-14 00:00:00",
+      "last_valid": "2026-03-05 23:00:00"
+    },
+    "ecmwf_ifs025": {
+      "rows": 52344,
+      "runs": 2916,
+      "first_valid": "2024-03-06 00:00:00",
+      "last_valid": "2026-03-02 23:00:00"
+    },
+    "gfs_seamless": {
+      "rows": 52344,
+      "runs": 2916,
+      "first_valid": "2024-03-06 00:00:00",
+      "last_valid": "2026-03-02 23:00:00"
+    },
+    "icon_seamless": {
+      "rows": 52344,
+      "runs": 2916,
+      "first_valid": "2024-03-06 00:00:00",
+      "last_valid": "2026-03-02 23:00:00"
+    }
+  },
+  "tz_offset_corr": {
+    "ws_plant": {
+      "0": 0.373,
+      "1": 0.4527,
+      "2": 0.5402,
+      "3": 0.6348,
+      "4": 0.7257,
+      "5": 0.7877,
+      "6": 0.7911,
+      "7": 0.7488,
+      "8": 0.679,
+      "9": 0.6021,
+      "10": 0.5219
+    },
+    "temp_T1": {
+      "0": 0.9009,
+      "1": 0.9174,
+      "2": 0.935,
+      "3": 0.9522,
+      "4": 0.9674,
+      "5": 0.9787,
+      "6": 0.9842,
+      "7": 0.9831,
+      "8": 0.9761,
+      "9": 0.9645,
+      "10": 0.9498
+    }
+  },
+  "tz_best_offset_h": {
+    "ws_plant": 6,
+    "temp_T1": 6
+  },
+  "issued": {
+    "issues": 723,
+    "rows": 138432,
+    "first_issue": "2024-03-07",
+    "last_issue": "2026-02-27"
+  },
+  "skill_wind": [
+    {
+      "model": "ensemble_mean",
+      "day_ahead": 1,
+      "n": 16295,
+      "corr": 0.754,
+      "bias_ms": 0.01,
+      "mae_ms": 1.89,
+      "lead_h_mean": NaN
+    },
+    {
+      "model": "ecmwf_ifs",
+      "day_ahead": 1,
+      "n": 16099,
+      "corr": 0.704,
+      "bias_ms": -0.96,
+      "mae_ms": 2.18,
+      "lead_h_mean": 36.8
+    },
+    {
+      "model": "ecmwf_ifs025",
+      "day_ahead": 1,
+      "n": 16295,
+      "corr": 0.681,
+      "bias_ms": 0.58,
+      "mae_ms": 2.33,
+      "lead_h_mean": 44.5
+    },
+    {
+      "model": "icon_seamless",
+      "day_ahead": 1,
+      "n": 16295,
+      "corr": 0.657,
+      "bias_ms": -0.48,
+      "mae_ms": 2.35,
+      "lead_h_mean": 44.5
+    },
+    {
+      "model": "gfs_seamless",
+      "day_ahead": 1,
+      "n": 16295,
+      "corr": 0.631,
+      "bias_ms": 0.91,
+      "mae_ms": 2.7,
+      "lead_h_mean": 44.5
+    },
+    {
+      "model": "ensemble_mean",
+      "day_ahead": 2,
+      "n": 16271,
+      "corr": 0.697,
+      "bias_ms": -0.01,
+      "mae_ms": 2.1,
+      "lead_h_mean": NaN
+    },
+    {
+      "model": "ecmwf_ifs",
+      "day_ahead": 2,
+      "n": 16027,
+      "corr": 0.657,
+      "bias_ms": -1.03,
+      "mae_ms": 2.34,
+      "lead_h_mean": 60.7
+    },
+    {
+      "model": "ecmwf_ifs025",
+      "day_ahead": 2,
+      "n": 16271,
+      "corr": 0.615,
+      "bias_ms": 0.56,
+      "mae_ms": 2.56,
+      "lead_h_mean": 68.5
+    },
+    {
+      "model": "icon_seamless",
+      "day_ahead": 2,
+      "n": 16271,
+      "corr": 0.588,
+      "bias_ms": -0.49,
+      "mae_ms": 2.57,
+      "lead_h_mean": 68.5
+    },
+    {
+      "model": "gfs_seamless",
+      "day_ahead": 2,
+      "n": 16271,
+      "corr": 0.548,
+      "bias_ms": 0.9,
+      "mae_ms": 2.98,
+      "lead_h_mean": 68.5
+    }
+  ],
+  "ecmwf_monthly_error": {
+    "bias": {
+      "1": -1.17,
+      "2": -1.11,
+      "3": -1.37,
+      "4": -0.84,
+      "5": -0.72,
+      "6": -0.85,
+      "7": -0.56,
+      "8": -0.38,
+      "9": -0.76,
+      "10": -1.1,
+      "11": -1.4,
+      "12": -1.77
+    },
+    "mae": {
+      "1": 2.21,
+      "2": 2.1,
+      "3": 2.37,
+      "4": 2.17,
+      "5": 2.25,
+      "6": 2.3,
+      "7": 2.23,
+      "8": 2.38,
+      "9": 2.03,
+      "10": 2.16,
+      "11": 2.35,
+      "12": 2.53
+    }
+  },
+  "temp_scada_minus_nwp_by_month": {
+    "1": 1.4,
+    "2": 3.0,
+    "3": 4.8,
+    "4": 4.5,
+    "5": 3.6,
+    "6": 3.4,
+    "7": 3.1,
+    "8": 3.3,
+    "9": 4.5,
+    "10": 4.4,
+    "11": 3.9,
+    "12": 2.3
+  },
+  "temp_corr": 0.979,
+  "test_audit": {
+    "issues": 28,
+    "hours_per_model": {
+      "ecmwf_ifs": 48,
+      "ecmwf_ifs025": 48,
+      "gfs_seamless": 48,
+      "icon_seamless": 48
+    },
+    "no_lookahead": true
+  }
+}
