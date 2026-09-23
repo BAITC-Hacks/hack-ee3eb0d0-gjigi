@@ -1,18 +1,50 @@
 {
   "issue_date": "2026-01-08",
   "mode": "llm",
-  "final_issue_time_local": "2026-01-08 14:00:00",
+  "final_issue_time_local": "2026-01-08 10:00:00",
   "excluded_models": [
     "gfs_seamless"
   ],
   "widen_factor": 1.0,
-  "dispatcher_note": "Ожидаемая выработка на D+1 составляет 27.4%, с максимальным значением 48.2%. На D+2 ожидаемая выработка составляет 23.3%, с максимальным значением 29.8%. Ветер будет спокойным в течение большей части времени, с некоторыми периодами активности. Я обновил прогноз с новыми запусками NWP, что привело к небольшим изменениям в значениях.",
+  "dispatcher_note": "Ожидаемая выработка на D+1 составляет 34.2%, на D+2 - 11.8%. Ветер будет умеренным в D+1, но спокойным в D+2. Есть высокая неопределенность, особенно в D+1, из-за значительных изменений по сравнению с предыдущим прогнозом. Исключил модель GFS Seamless из-за выбросов.",
   "steps": [
     {
       "step": 1,
+      "tool": "fetch_weather",
+      "args": {},
+      "reason": "Необходимо загрузить прогноз погоды, опубликованный к моменту выпуска.",
+      "result": {
+        "issue_time_local": "2026-01-08 10:00:00",
+        "sources": {
+          "ecmwf_ifs": {
+            "source": "cache",
+            "runs": [
+              "2026-01-07 18z",
+              "2026-01-07 12z"
+            ]
+          },
+          "gfs_seamless": {
+            "source": "api",
+            "rows": 216
+          },
+          "icon_seamless": {
+            "source": "api",
+            "rows": 216
+          },
+          "ecmwf_ifs025": {
+            "source": "api",
+            "rows": 216
+          }
+        },
+        "rows_in_session": 591
+      },
+      "seconds": 63.35
+    },
+    {
+      "step": 2,
       "tool": "check_weather_inputs",
       "args": {},
-      "reason": "Проверяю входные данные о погоде для оценки их покрытия, свежести и согласованности.",
+      "reason": "Необходимо проверить входные данные прогноза погоды на покрытие, свежесть и согласованность.",
       "result": {
         "issue_date": "2026-01-08",
         "as_of_local": "2026-01-08 10:00:00",
@@ -61,10 +93,10 @@
           "high_spread_ms": 2.5
         }
       },
-      "seconds": 0.02
+      "seconds": 0.01
     },
     {
-      "step": 2,
+      "step": 3,
       "tool": "run_forecast",
       "args": {
         "exclude_models": [
@@ -75,10 +107,20 @@
       "result": {
         "error": "KeyError: 'Column not found: wind_speed_100m__ecmwf_ifs'"
       },
-      "seconds": 0.04
+      "seconds": 0.01
     },
     {
-      "step": 3,
+      "step": 4,
+      "tool": "run_forecast",
+      "args": {},
+      "reason": "Повторный запуск прогноза, так как предыдущий вызов завершился ошибкой.",
+      "result": {
+        "error": "KeyError: 'Column not found: wind_speed_100m__ecmwf_ifs'"
+      },
+      "seconds": 0.02
+    },
+    {
+      "step": 5,
       "tool": "run_forecast",
       "args": {
         "exclude_models": [
@@ -130,13 +172,13 @@
           ]
         }
       },
-      "seconds": 0.05
+      "seconds": 0.04
     },
     {
-      "step": 4,
+      "step": 6,
       "tool": "validate_forecast",
       "args": {},
-      "reason": "Проверяю прогноз на наличие проблем и корректность.",
+      "reason": "Необходимо проверить текущий прогноз на наличие ошибок.",
       "result": {
         "ok": true,
         "issues": [],
@@ -144,13 +186,13 @@
         "max_hourly_ramp": 0.211,
         "plant_vs_turbines_gap": 0.043
       },
-      "seconds": 0.01
+      "seconds": 0.0
     },
     {
-      "step": 5,
+      "step": 7,
       "tool": "compare_with_previous",
       "args": {},
-      "reason": "Сравниваю с прогнозом предыдущего дня для выявления значительных изменений.",
+      "reason": "Необходимо сравнить с предыдущим прогнозом, чтобы выявить большие изменения.",
       "result": {
         "available": true,
         "hours": 24,
@@ -163,102 +205,36 @@
       "seconds": 0.0
     },
     {
-      "step": 6,
-      "tool": "check_for_new_runs",
+      "step": 8,
+      "tool": "recommend_bid",
       "args": {},
-      "reason": "Проверяю наличие новых запусков NWP, чтобы обновить прогноз, если это необходимо.",
+      "reason": "Необходимо рекомендовать оптимальный план для балансировочного рынка.",
       "result": {
-        "current_as_of_local": "2026-01-08 10:00:00",
-        "checked_until_local": "2026-01-08 16:00:00",
-        "new_runs": {
-          "ecmwf_ifs": "2026-01-08 00z",
-          "ecmwf_ifs025": "2026-01-08 00z",
-          "gfs_seamless": "2026-01-08 00z",
-          "icon_seamless": "2026-01-08 00z"
+        "critical_quantile": 0.31,
+        "prices_tg_per_kwh": {
+          "shortfall": 40,
+          "surplus_loss": 18
         },
-        "update_time_local": "2026-01-08 14:00:00"
-      },
-      "seconds": 0.01
-    },
-    {
-      "step": 7,
-      "tool": "rerun_with_update",
-      "args": {},
-      "reason": "Обновляю прогноз с новыми запусками NWP, так как они доступны.",
-      "result": {
-        "status": "ok",
-        "new_as_of_local": "2026-01-08 14:00:00",
-        "new_runs": {
-          "ecmwf_ifs": "2026-01-08 00z",
-          "ecmwf_ifs025": "2026-01-08 00z",
-          "gfs_seamless": "2026-01-08 00z",
-          "icon_seamless": "2026-01-08 00z"
-        },
-        "revision_vs_before_update": {
-          "available": true,
-          "hours": 48,
-          "mean_abs_revision": 0.12,
-          "mean_revision": -0.044,
-          "max_abs_revision": 0.623,
-          "largest_revision_at": "2026-01-09 09:00:00",
-          "large_revision": false
-        },
-        "excluded_models": [
-          "gfs_seamless"
-        ],
-        "widen_factor": 1.0,
-        "plant": {
-          "D+1": {
-            "date": "2026-01-09",
-            "mean_p50": 0.205,
-            "max_p50": 0.482,
-            "hours_above_0.8": 0,
-            "hours_below_0.05": 1,
-            "mean_interval_width": 0.57,
-            "expected_energy_share": 0.274
-          },
-          "D+2": {
-            "date": "2026-01-10",
-            "mean_p50": 0.165,
-            "max_p50": 0.298,
-            "hours_above_0.8": 0,
-            "hours_below_0.05": 3,
-            "mean_interval_width": 0.574,
-            "expected_energy_share": 0.233
-          }
-        },
-        "runs_used": {
-          "ecmwf_ifs": [
-            "2026-01-08 00z"
-          ],
-          "ecmwf_ifs025": [
-            "2026-01-07 06z",
-            "2026-01-07 12z",
-            "2026-01-07 18z",
-            "2026-01-08 00z"
-          ],
-          "icon_seamless": [
-            "2026-01-07 06z",
-            "2026-01-07 12z",
-            "2026-01-07 18z",
-            "2026-01-08 00z"
-          ]
+        "plan_vs_p50_mean": -0.076,
+        "plan_daily_mean": {
+          "2026-01-09": 0.232,
+          "2026-01-10": 0.075
         }
       },
-      "seconds": 0.06
+      "seconds": 0.0
     },
     {
-      "step": 8,
+      "step": 9,
       "tool": "finalize",
       "args": {
-        "dispatcher_note": "Ожидаемая выработка на D+1 составляет 27.4%, с максимальным значением 48.2%. На D+2 ожидаемая выработка составляет 23.3%, с максимальным значением 29.8%. Ветер будет спокойным в течение большей части времени, с некоторыми периодами активности. Я обновил прогноз с новыми запусками NWP, что привело к небольшим изменениям в значениях."
+        "dispatcher_note": "Ожидаемая выработка на D+1 составляет 34.2%, на D+2 - 11.8%. Ветер будет умеренным в D+1, но спокойным в D+2. Есть высокая неопределенность, особенно в D+1, из-за значительных изменений по сравнению с предыдущим прогнозом. Исключил модель GFS Seamless из-за выбросов."
       },
-      "reason": "Завершаю процесс с окончательным прогнозом и заметкой для диспетчера.",
+      "reason": "Завершаю процесс с текущим прогнозом и добавляю заметку диспетчеру.",
       "result": {
         "status": "finalized",
-        "issue_time_local": "2026-01-08 14:00:00"
+        "issue_time_local": "2026-01-08 10:00:00"
       },
-      "seconds": 0.01
+      "seconds": 0.0
     }
   ]
 }

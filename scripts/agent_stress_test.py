@@ -52,10 +52,8 @@ def corrupt(rows: pd.DataFrame, scenario: str) -> pd.DataFrame:
 
 
 def patched_fetch(scenario):
-    orig = T.fetch_for_issue
-
     def f(*a, **kw):
-        rows, rep = orig(*a, **kw)
+        rows, rep = fetch_for_issue(*a, **kw)     # always the original fetch
         return corrupt(rows, scenario), rep
     return f
 
@@ -105,7 +103,9 @@ def main():
     det = r[r["system"] != "pipeline"].groupby(["scenario", "system"])["excluded"] \
         .apply(lambda s: f"{(s != '').sum()}/{len(s)}").unstack()
     lines = ["# Стресс-тест агента: намеренно испорченные входные данные", "",
-             f"Выпуски {start} … {end}, модели обучены до 01.12.2025, MAE P50 станции против факта SCADA.", "",
+             f"Выпуски {start} … {end}, модели обучены до 01.12.2025, MAE P50 станции против факта SCADA.",
+             "Конвейер — выпуск в 10:00 без проверок; агент получает те же испорченные данные "
+             "(и, как обычно, может пересчитать прогноз после публикации свежего прогона).", "",
              "| Сценарий | " + " | ".join(f"MAE {c}" for c in tab.columns) + " |",
              "|---|" + "---|" * len(tab.columns)]
     names = {"none": "данные исправны", "gfs_garbage": "GFS выдаёт мусор (×2.5 + 4 м/с)",

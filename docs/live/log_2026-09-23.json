@@ -1,0 +1,199 @@
+{
+  "issued_local": "2026-09-23 16:00:00",
+  "mode": "rules",
+  "note": "D+1 (2026-09-24): низкая выработка, средняя 12% от номинала, часов >80%: 0, штиль (<5%): 9 ч, ширина интервала 0.31. D+2 (2026-09-25): средняя выработка, средняя 26% от номинала, часов >80%: 0, штиль (<5%): 0 ч, ширина интервала 0.55.",
+  "steps": [
+    {
+      "step": 1,
+      "tool": "fetch_weather",
+      "args": {},
+      "reason": "получить прогнозы погоды, опубликованные к моменту выпуска",
+      "result": {
+        "issue_time_local": "2026-09-23 16:00:00",
+        "sources": {
+          "ecmwf_ifs": {
+            "source": "cache",
+            "runs": [
+              "2026-09-23 00z",
+              "2026-09-22 18z"
+            ]
+          },
+          "gfs_seamless": {
+            "source": "cache",
+            "rows": 216
+          },
+          "icon_seamless": {
+            "source": "cache",
+            "rows": 216
+          },
+          "ecmwf_ifs025": {
+            "source": "cache",
+            "rows": 216
+          }
+        },
+        "rows_in_session": 594
+      },
+      "seconds": 0.01
+    },
+    {
+      "step": 2,
+      "tool": "check_weather_inputs",
+      "args": {},
+      "reason": "observe inputs",
+      "result": {
+        "issue_date": "2026-09-23",
+        "as_of_local": "2026-09-23 16:00:00",
+        "models": {
+          "ecmwf_ifs": {
+            "hours": 48,
+            "newest_run": "2026-09-23 00z",
+            "run_age_h": 10.0,
+            "mean_ws100": 4.72,
+            "mean_abs_dev_from_median": 1.11
+          },
+          "ecmwf_ifs025": {
+            "hours": 48,
+            "newest_run": "2026-09-23 00z",
+            "run_age_h": 10.0,
+            "mean_ws100": 5.48,
+            "mean_abs_dev_from_median": 0.9
+          },
+          "gfs_seamless": {
+            "hours": 48,
+            "newest_run": "2026-09-23 00z",
+            "run_age_h": 10.0,
+            "mean_ws100": 5.78,
+            "mean_abs_dev_from_median": 2.01
+          },
+          "icon_seamless": {
+            "hours": 48,
+            "newest_run": "2026-09-23 00z",
+            "run_age_h": 10.0,
+            "mean_ws100": 5.15,
+            "mean_abs_dev_from_median": 1.31
+          }
+        },
+        "missing_models": [],
+        "excluded_models": [],
+        "ensemble_spread_ms": {
+          "mean": 1.8,
+          "max": 3.26,
+          "hours_above_threshold": 7
+        },
+        "outlier_candidates": [],
+        "thresholds": {
+          "outlier_model_dev_ms": 3.0,
+          "high_spread_ms": 2.5
+        }
+      },
+      "seconds": 0.0
+    },
+    {
+      "step": 3,
+      "tool": "run_forecast",
+      "args": {
+        "exclude_models": []
+      },
+      "reason": "all sources healthy",
+      "result": {
+        "status": "ok",
+        "excluded_models": [],
+        "widen_factor": 1.0,
+        "plant": {
+          "D+1": {
+            "date": "2026-09-24",
+            "mean_p50": 0.122,
+            "max_p50": 0.414,
+            "hours_above_0.8": 0,
+            "hours_below_0.05": 9,
+            "mean_interval_width": 0.309,
+            "expected_energy_share": 0.17
+          },
+          "D+2": {
+            "date": "2026-09-25",
+            "mean_p50": 0.261,
+            "max_p50": 0.586,
+            "hours_above_0.8": 0,
+            "hours_below_0.05": 0,
+            "mean_interval_width": 0.549,
+            "expected_energy_share": 0.295
+          }
+        },
+        "runs_used": {
+          "ecmwf_ifs": [
+            "2026-09-23 00z"
+          ],
+          "ecmwf_ifs025": [
+            "2026-09-22 06z",
+            "2026-09-22 12z",
+            "2026-09-22 18z",
+            "2026-09-23 00z"
+          ],
+          "gfs_seamless": [
+            "2026-09-22 06z",
+            "2026-09-22 12z",
+            "2026-09-22 18z",
+            "2026-09-23 00z"
+          ],
+          "icon_seamless": [
+            "2026-09-22 06z",
+            "2026-09-22 12z",
+            "2026-09-22 18z",
+            "2026-09-23 00z"
+          ]
+        }
+      },
+      "seconds": 0.02
+    },
+    {
+      "step": 4,
+      "tool": "validate_forecast",
+      "args": {},
+      "reason": "verify",
+      "result": {
+        "ok": true,
+        "issues": [],
+        "mean_interval_width": 0.429,
+        "max_hourly_ramp": 0.183,
+        "plant_vs_turbines_gap": 0.01
+      },
+      "seconds": 0.0
+    },
+    {
+      "step": 5,
+      "tool": "compare_with_previous",
+      "args": {},
+      "reason": "consistency with yesterday",
+      "result": {
+        "available": false
+      },
+      "seconds": 0.0
+    },
+    {
+      "step": 6,
+      "tool": "check_for_new_runs",
+      "args": {},
+      "reason": "look for fresher NWP",
+      "result": {
+        "current_as_of_local": "2026-09-23 16:00:00",
+        "checked_until_local": "2026-09-23 16:00:00",
+        "new_runs": {},
+        "update_time_local": null
+      },
+      "seconds": 0.01
+    },
+    {
+      "step": 7,
+      "tool": "finalize",
+      "args": {
+        "dispatcher_note": "D+1 (2026-09-24): низкая выработка, средняя 12% от номинала, часов >80%: 0, штиль (<5%): 9 ч, ширина интервала 0.31. D+2 (2026-09-25): средняя выработка, средняя 26% от номинала, часов >80%: 0, штиль (<5%): 0 ч, ширина интервала 0.55."
+      },
+      "reason": "done",
+      "result": {
+        "status": "finalized",
+        "issue_time_local": "2026-09-23 16:00:00"
+      },
+      "seconds": 0.0
+    }
+  ]
+}
