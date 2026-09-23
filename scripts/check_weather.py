@@ -62,6 +62,7 @@ if best["ws_plant"] != cfg["scada_utc_offset_h"]:
 
 # ── 2. Issue-protocol replay ────────────────────────────────────────────────
 issued = build_issued_archive()
+issued = issued[issued["is_target"]].copy()   # drop neighbour-hour padding
 summary["issued"] = {"issues": int(issued["issue_date"].nunique()),
                      "rows": int(len(issued)),
                      "first_issue": str(issued["issue_date"].min().date()),

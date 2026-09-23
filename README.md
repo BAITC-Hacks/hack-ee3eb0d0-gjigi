@@ -30,10 +30,14 @@ src/hackalem/
   weather/sources.py           загрузка точных прогонов и прогонов за прошлые дни → единый формат
   weather/store.py             архив прогнозов + get_forecast(as_of) без утечки
   weather/issued.py            воспроизведение протокола выпуска на истории (данные для обучения)
+  features/build.py            таблица признаков: только NWP + календарь, SCADA только как целевая переменная
+  models/baselines.py          базовые прогнозы: климатология, persistence, кривая мощности, изотоника
+  evaluation.py                метрики, holdout (дек–янв), rolling CV по месяцам
 scripts/
   run_eda.py                   этап 0: EDA → outputs/eda/
   build_weather_archive.py     этап 1: скачать архив NWP → data/weather/forecast_store.parquet
   check_weather.py             этап 1: часовой пояс, качество моделей, аудит тестовых выпусков → outputs/weather/
+  run_baselines.py             этап 2: признаки + оценка базовых прогнозов → outputs/baselines/
 tests/                         pytest
 data/raw/                      исходные CSV организаторов
 data/weather/                  архив прогнозов (в репозитории, чтобы работало без интернета)
@@ -46,13 +50,14 @@ pip install -e .
 python scripts/run_eda.py
 python scripts/build_weather_archive.py   # ~15 мин при первом запуске; повторно — из кэша
 python scripts/check_weather.py
+python scripts/run_baselines.py --refresh
 pytest -q
 ```
 
 ## Статус
 - [x] Этап 0 — каркас проекта, очистка данных, EDA ([отчёт](outputs/eda/EDA.md))
 - [x] Этап 1 — архивные погодные прогнозы без утечки ([отчёт](outputs/weather/WEATHER.md))
-- [ ] Этап 2 — признаки и baselines
+- [x] Этап 2 — признаки и базовые прогнозы ([отчёт](outputs/baselines/BASELINES.md)): лучшая базовая модель — MAE 0.192 (holdout)
 - [ ] Этап 3 — основная модель (квантили)
 - [ ] Этап 4 — rolling backtest февраля 2026
 - [ ] Этап 5 — агентный слой

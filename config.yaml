@@ -92,3 +92,11 @@ quality:
   curve_mad_k: 4.0              # below-curve outlier threshold (robust z)
 
 random_state: 42
+
+# Validation. Split by TARGET time (time_local), never by issue date alone.
+validation:
+  holdout_start: "2025-12-01"     # "rehearsal of February": Dec 2025 + Jan 2026
+  holdout_end: "2026-01-31 23:00"
+  cv_first_month: "2025-02"       # rolling-origin monthly folds for robustness
+  cv_last_month: "2026-01"
+  power_curve_min_date: "2023-03-11"   # SCADA-only curve may use pre-NWP history

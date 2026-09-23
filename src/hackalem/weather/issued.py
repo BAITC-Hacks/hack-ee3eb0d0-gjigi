@@ -12,19 +12,28 @@ from hackalem.timeutils import issue_time_utc, offset, target_hours_local
 from hackalem.weather.store import get_forecast, load_store
 
 
-def issued_forecasts(issue_dates, store: pd.DataFrame | None = None) -> pd.DataFrame:
-    """Long frame: issue_date, issue_time_utc, time_local, valid_time(UTC), model,
-    init_time, available_at, lead_h, lead_from_issue_h, <variables...>"""
+def issued_forecasts(issue_dates, store: pd.DataFrame | None = None,
+                     pad_h: int = 3) -> pd.DataFrame:
+    """Long frame: issue_date, issue_time_utc, time_local, is_target, valid_time(UTC),
+    model, init_time, available_at, lead_h, lead_from_issue_h, <variables...>
+
+    `pad_h` extra hours on each side of the 48 target hours (is_target=False)
+    let features look at neighbouring NWP hours. They come from the same
+    runs, published before the issue time, so padding cannot leak.
+    """
     store = load_store() if store is None else store
     off = offset()
+    pad = pd.Timedelta(hours=pad_h)
     out = []
     for d in pd.DatetimeIndex(issue_dates):
         as_of = issue_time_utc(d)
-        local = target_hours_local(d)
+        target = target_hours_local(d)
+        local = pd.date_range(target[0] - pad, target[-1] + pad, freq="h")
         fc = get_forecast(store, as_of, local - off)
         fc.insert(0, "issue_date", d.normalize())
         fc.insert(1, "issue_time_utc", as_of)
         fc.insert(2, "time_local", fc["valid_time"] + off)
+        fc.insert(3, "is_target", fc["time_local"].isin(target))
         out.append(fc)
     return pd.concat(out, ignore_index=True)
 
