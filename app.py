@@ -287,3 +287,29 @@ else:
             st.markdown('<div class="eyebrow" style="margin-top:0">Процесс · от данных к прогнозу</div>',
                         unsafe_allow_html=True)
             st.markdown(steps_html(agent.log), unsafe_allow_html=True)
+
+        # hourly forecast table (48 h)
+        fin = s.final.copy()
+        wide = fin.pivot_table(index="time_local", columns="unit", values="p50")
+        plant = fin[fin["unit"] == "plant"].set_index("time_local").sort_index()
+        tbl = pd.DataFrame({
+            "Час": plant.index.strftime("%d.%m %H:%M"),
+            "Сутки": plant["day_ahead"].map({1: "D+1 · завтра", 2: "D+2 · послезавтра"}).values,
+            "Прогноз станции, %": (plant["p50"] * 100).round(1).values,
+            "Интервал P10–P90, %": [f"{a * 100:.0f} – {b * 100:.0f}" for a, b in zip(plant["p10"], plant["p90"])],
+            "Турбина 1, %": (wide.reindex(plant.index)["T1"] * 100).round(1).values if "T1" in wide else None,
+            "Турбина 2, %": (wide.reindex(plant.index)["T2"] * 100).round(1).values if "T2" in wide else None,
+        })
+        if "plan_bid" in plant and plant["plan_bid"].notna().any():
+            tbl["План для рынка, %"] = (plant["plan_bid"] * 100).round(1).values
+        st.markdown('<div class="eyebrow">Почасовой прогноз · 48 часов</div>', unsafe_allow_html=True)
+        st.dataframe(tbl, hide_index=True, use_container_width=True, height=460, column_config={
+            "Прогноз станции, %": st.column_config.ProgressColumn(
+                "Прогноз станции (P50)", min_value=0, max_value=100, format="%.1f%%"),
+            "Турбина 1, %": st.column_config.NumberColumn("Турбина 1 (T1)", format="%.1f%%"),
+            "Турбина 2, %": st.column_config.NumberColumn("Турбина 2 (T2)", format="%.1f%%"),
+            "План для рынка, %": st.column_config.NumberColumn(
+                "План для рынка", format="%.1f%%", help="Выгодный план подачи на балансирующий рынок (квантиль P31)"),
+        })
+        st.download_button("↓ Скачать прогноз выпуска (CSV)", tbl.to_csv(index=False).encode("utf-8"),
+                           f"forecast_{issue}.csv")
