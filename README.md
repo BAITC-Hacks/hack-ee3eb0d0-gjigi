@@ -224,7 +224,7 @@ LLM принимает решения не строго детерминиров
 Каждый час февраля покрыт двумя выпусками: за сутки (D+1) и за двое суток (D+2).
 
 Всё остальное — материалы для проверки решения в **`docs/`**: отчёты этапов (EDA, погодный архив, baselines, модель),
-журнал решений агента (`docs/agent/logs/*.json`, [`AGENT_REPORT.md`](docs/agent/AGENT_REPORT.md)), аудит прогонов NWP по выпускам, стресс-тест, экономика, живой прогноз (`docs/live/`), [текст питча](docs/PITCH.md),
+журнал решений агента (`docs/agent/logs/*.json`, [`AGENT_REPORT.md`](docs/agent/AGENT_REPORT.md)), аудит прогонов NWP по выпускам, стресс-тест, экономика, живой прогноз (`docs/live/`),
 прогноз без агента и репетиции на январе.
 
 ## 8. Запуск
@@ -239,7 +239,7 @@ echo 'OPENAI_API_KEY=sk-...' > .env        # модель: OPENAI_MODEL, по у
 make agent        # агент по февралю 2026 → outputs/forecast_feb2026.csv + журнал в docs/agent/ (~1 мин на правилах, ~5 мин с LLM)
 make rehearsal    # агент на январе 2026 + сравнение с фактом
 make forecast     # тот же прогноз без агента (для сравнения) → docs/forecast/
-make test         # 13 тестов (в т.ч. на отсутствие утечки) + make verify
+make test         # 17 тестов (в т.ч. на отсутствие утечки) + make verify
 make demo         # дашборд Streamlit → http://localhost:8501
 make live         # реальный прогноз на ближайшие 2 суток по свежим прогонам (нужен интернет)
 make stress       # стресс-тест: испорченные/пропавшие источники погоды, конвейер против агента
@@ -290,7 +290,7 @@ docs/                        отчёты, графики, журналы аге
 scripts/                     run_eda · build_weather_archive · check_weather · run_baselines ·
                              train_model · run_backtest · run_agent · forecast_live ·
                              agent_stress_test · economics_eval
-tests/                       13 тестов (данные, утечка, признаки, модель, агент)
+tests/                       17 тестов (данные, утечка, признаки, модель, агент)
 ```
 
 ## 10. Ограничения

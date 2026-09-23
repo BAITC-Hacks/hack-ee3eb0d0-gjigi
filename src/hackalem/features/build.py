@@ -54,14 +54,21 @@ def _time_shift_features(wide: pd.DataFrame, col: str, prefix: str) -> pd.DataFr
 def build_features(issued: pd.DataFrame, with_targets: bool = True) -> pd.DataFrame:
     """issued: output of weather.issued.issued_forecasts (long, with padding)."""
     d = _derive_row_vars(issued)
-    wide = d.pivot_table(index=KEYS, columns="model", values=PER_MODEL_VARS, aggfunc="first")
+    wide = d.pivot_table(index=KEYS, columns="model", values=PER_MODEL_VARS, aggfunc="first", dropna=False)
     wide.columns = [f"{v}__{m}" for v, m in wide.columns]
     ec = d[d["model"] == MAIN_MODEL].set_index(KEYS)[ECMWF_ONLY_VARS].add_suffix(f"__{MAIN_MODEL}")
     wide = wide.join(ec)
+    # a source may be missing entirely (outage / excluded by the agent): keep its columns as NaN
+    w = load_config()["weather"]
+    expected = [f"{v}__{m}" for v in PER_MODEL_VARS for m in w["single_run_models"] + w["prev_run_models"]]
+    expected += [f"{v}__{MAIN_MODEL}" for v in ECMWF_ONLY_VARS]
+    for c in expected:
+        if c not in wide.columns:
+            wide[c] = np.nan
     is_target = d.groupby(KEYS)["is_target"].first()
     wide = wide.sort_index()
 
-    models = sorted(d["model"].unique())
+    models = sorted(set(w["single_run_models"] + w["prev_run_models"]))
     ws = wide[[f"wind_speed_100m__{m}" for m in models]]
     f = pd.DataFrame(index=wide.index)
     f["ens_ws100_mean"] = ws.mean(axis=1)

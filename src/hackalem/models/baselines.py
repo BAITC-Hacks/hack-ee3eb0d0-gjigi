@@ -72,10 +72,12 @@ class MeasuredPowerCurve:
         if self.calibrate:
             ok = ~np.isnan(w)
             w = w.copy()
-            w[ok] = self.cal.predict(pd.DataFrame({self.wind_col: w[ok]}))
+            if ok.any():
+                w[ok] = self.cal.predict(pd.DataFrame({self.wind_col: w[ok]}))
         out = np.full(len(w), np.nan)
         ok = ~np.isnan(w)
-        out[ok] = self.curve.predict(np.clip(w[ok], 0, None))
+        if ok.any():                      # a source may be entirely missing
+            out[ok] = self.curve.predict(np.clip(w[ok], 0, None))
         return out
 
 
@@ -97,7 +99,8 @@ class DirectIsotonic:
         w = df[self.wind_col].to_numpy(float)
         out = np.full(len(w), np.nan)
         ok = ~np.isnan(w)
-        out[ok] = self.iso.predict(w[ok])
+        if ok.any():
+            out[ok] = self.iso.predict(w[ok])
         return out
 
 

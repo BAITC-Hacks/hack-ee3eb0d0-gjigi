@@ -42,3 +42,13 @@ def test_fetch_weather_offline_falls_back_to_repo_archive(tmp_path, monkeypatch)
     a = issued_forecasts(["2026-02-11"], archive)
     b = issued_forecasts(["2026-02-11"], rows)
     assert len(a) == len(b) and set(a["init_time"]) == set(b["init_time"])
+
+
+@pytest.mark.parametrize("missing", ["ecmwf_ifs", "gfs_seamless", "icon_seamless", "ecmwf_ifs025"])
+def test_forecast_survives_any_missing_source(missing):
+    from hackalem.forecast import load_models, run_issue
+    from hackalem.weather.store import load_store
+
+    st = load_store()
+    fc = run_issue("2026-01-15", models=load_models(), store=st[st["model"] != missing]).forecast
+    assert fc[["p10", "p50", "p90"]].notna().all().all() and len(fc) == 3 * 48
