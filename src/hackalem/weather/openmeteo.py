@@ -27,6 +27,7 @@ class OpenMeteoClient:
         self.timeout_s = timeout_s
         self._lock = threading.Lock()
         self._last_call = 0.0
+        self.last_from_cache = False
 
     def _cache_path(self, url: str, params: dict) -> Path:
         key = json.dumps([url, sorted(params.items())], sort_keys=True)
@@ -46,6 +47,7 @@ class OpenMeteoClient:
         archived) so callers can decide; raises on transport/HTTP failures.
         """
         path = self._cache_path(url, params)
+        self.last_from_cache = path.exists()
         if path.exists():
             with gzip.open(path, "rt", encoding="utf-8") as f:
                 return json.load(f)

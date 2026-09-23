@@ -13,7 +13,9 @@ import pandas as pd
 from hackalem.config import load_config
 from hackalem.forecast import IssueResult, run_issue
 from hackalem.timeutils import issue_time_utc, utc_to_local
+from hackalem.weather.fetch import fetch_for_issue
 from hackalem.weather.issued import issued_forecasts
+from hackalem.weather.store import add_availability, merge_into_store
 
 MAIN_MODEL = "ecmwf_ifs"
 
@@ -22,7 +24,8 @@ MAIN_MODEL = "ecmwf_ifs"
 class ForecastSession:
     issue_date: pd.Timestamp
     models: dict
-    store: pd.DataFrame
+    store: pd.DataFrame | None = None     # NWP rows fetched by the agent (starts empty)
+    archive: pd.DataFrame | None = None   # repo archive: offline fallback only
     as_of_utc: pd.Timestamp = None
     excluded: list = field(default_factory=list)
     result: IssueResult | None = None
@@ -36,6 +39,15 @@ class ForecastSession:
         if self.as_of_utc is None:
             self.as_of_utc = issue_time_utc(self.issue_date)
         self.cfg = load_config()["agent"]
+        if self.store is None:
+            self.store = pd.DataFrame(columns=["model", "init_time", "valid_time", "lead_h", "available_at"])
+        self.fetch_reports: list = []
+
+    def merge_rows(self, rows: pd.DataFrame):
+        if len(rows):
+            base = self.store if len(self.store) else None
+            self.store = merge_into_store(base, rows.drop(columns=["available_at"]))
+            self.store = add_availability(self.store, load_config())
 
 
 def _plant(fc: pd.DataFrame) -> pd.DataFrame:
@@ -44,8 +56,19 @@ def _plant(fc: pd.DataFrame) -> pd.DataFrame:
 
 # ── tools ────────────────────────────────────────────────────────────────────
 
+def fetch_weather(s: ForecastSession) -> dict:
+    """Download (Open-Meteo) the NWP runs published by the issue time for this plant."""
+    rows, report = fetch_for_issue(s.issue_date, s.as_of_utc, archive=s.archive)
+    s.merge_rows(rows)
+    s.fetch_reports.append(report)
+    return {"issue_time_local": str(utc_to_local(s.as_of_utc)), "sources": report,
+            "rows_in_session": int(len(s.store))}
+
+
 def check_weather_inputs(s: ForecastSession) -> dict:
     """Coverage, freshness and agreement of the NWP sources available at as_of."""
+    if not len(s.store):
+        return {"error": "no weather data in the session yet - call fetch_weather first"}
     w = issued_forecasts([s.issue_date], s.store, as_of_utc=s.as_of_utc)
     w = w[w["is_target"] & ~w["model"].isin(s.excluded)]
     ws = w.pivot_table(index="time_local", columns="model", values="wind_speed_100m")
@@ -78,6 +101,8 @@ def check_weather_inputs(s: ForecastSession) -> dict:
 
 def run_forecast(s: ForecastSession, exclude_models: list[str] | None = None) -> dict:
     """Run the ML forecast (plant, T1, T2) with the current inputs."""
+    if not len(s.store):
+        return {"error": "no weather data - call fetch_weather first"}
     if exclude_models is not None:
         bad = [m for m in exclude_models if m == MAIN_MODEL and len(exclude_models) > 2]
         if bad:
@@ -159,7 +184,9 @@ def compare_with_previous(s: ForecastSession, prev_forecast: pd.DataFrame | None
 
 
 def check_for_new_runs(s: ForecastSession, hours_later: float = 6) -> dict:
-    """Would newer NWP runs be published within `hours_later` h of the current as_of?"""
+    """Poll the source: are newer NWP runs published within `hours_later` h of as_of?"""
+    rows, report = fetch_for_issue(s.issue_date, s.as_of_utc, archive=s.archive, poll_hours=hours_later)
+    s.merge_rows(rows)
     t_new = s.as_of_utc + pd.Timedelta(hours=hours_later)
     pub = s.store[(s.store["available_at"] > s.as_of_utc) & (s.store["available_at"] <= t_new)]
     new = pub.groupby("model")["init_time"].max()
@@ -204,3 +231,18 @@ def finalize(s: ForecastSession, dispatcher_note: str) -> dict:
     s.final["final_issue_time_utc"] = s.as_of_utc
     s.notes.append(dispatcher_note)
     return {"status": "finalized", "issue_time_local": str(utc_to_local(s.as_of_utc))}
+
+
+def recommend_bid(s: ForecastSession) -> dict:
+    """Hourly plan for the balancing market: the cost-optimal quantile of the forecast."""
+    from hackalem.economics import critical_quantile, plan_from_quantiles
+    q = critical_quantile()
+    p = _plant(s.result.forecast)
+    plan = plan_from_quantiles(p, q)
+    s.result.forecast.loc[s.result.forecast["unit"] == "plant", "plan_bid"] = plan
+    e = load_config()["economics"]
+    return {"critical_quantile": round(q, 3),
+            "prices_tg_per_kwh": {"shortfall": e["shortfall_cost_tg_per_kwh"], "surplus_loss": e["surplus_loss_tg_per_kwh"]},
+            "plan_vs_p50_mean": round(float(plan.mean() - p["p50"].mean()), 3),
+            "plan_daily_mean": {str(k.date()): round(float(v), 3)
+                                for k, v in pd.Series(plan, index=p.index).groupby(p.index.normalize()).mean().items()}}

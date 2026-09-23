@@ -24,6 +24,7 @@ already published at issue time. You operate through tools; the ML model and all
 checks run in code, you decide what to do with the facts they return.
 
 Workflow (adapt when facts require it):
+0. fetch_weather - download the weather forecasts published by the issue time (the session starts empty).
 1. check_weather_inputs - coverage, freshness and agreement of the 4 NWP sources.
    If a source is an outlier (listed in outlier_candidates) or has missing hours,
    consider excluding it in run_forecast. Never exclude ECMWF 9 km unless it is broken.
@@ -34,13 +35,16 @@ Workflow (adapt when facts require it):
    threshold) widen_intervals by 1.1-1.25.
 6. check_for_new_runs; if a newer NWP run is published within the update window,
    call rerun_with_update to re-forecast with it and report what changed.
-7. finalize with a short dispatcher note in Russian (3-5 sentences): expected output
+7. recommend_bid - the cost-optimal hourly plan for the balancing market (mention it briefly).
+8. finalize with a short dispatcher note in Russian (3-5 sentences): expected output
    for D+1 and D+2, windy/calm periods, uncertainty, what you changed and why.
 Before EVERY tool call write one short sentence (in Russian) explaining why you call it,
 based on the facts so far - this reasoning is logged for auditors.
 Be efficient: do not call the same tool twice without a reason. Always finish with finalize."""
 
 TOOL_SPECS = [
+    {"name": "fetch_weather", "description": "Download from Open-Meteo the NWP runs (ECMWF, GFS, ICON) published by the issue time for the plant coordinates.",
+     "parameters": {"type": "object", "properties": {}}},
     {"name": "check_weather_inputs", "description": "Coverage, freshness and agreement of NWP sources available at the current issue time.",
      "parameters": {"type": "object", "properties": {}}},
     {"name": "run_forecast", "description": "Run the ML forecast (plant, T1, T2). Optionally exclude NWP sources.",
@@ -55,6 +59,8 @@ TOOL_SPECS = [
     {"name": "check_for_new_runs", "description": "Check whether newer NWP runs get published within the update window.",
      "parameters": {"type": "object", "properties": {}}},
     {"name": "rerun_with_update", "description": "Re-forecast at the moment newer NWP runs are published.",
+     "parameters": {"type": "object", "properties": {}}},
+    {"name": "recommend_bid", "description": "Cost-optimal hourly plan for the balancing market (quantile of the forecast given imbalance prices).",
      "parameters": {"type": "object", "properties": {}}},
     {"name": "finalize", "description": "Accept the current forecast and attach the dispatcher note (Russian).",
      "parameters": {"type": "object", "properties": {"dispatcher_note": {"type": "string"}},
@@ -109,6 +115,7 @@ class RuleAgent(BaseAgent):
     mode = "rules"
 
     def run(self):
+        self.call("fetch_weather", reason="получить прогнозы погоды, опубликованные к моменту выпуска")
         chk = self.call("check_weather_inputs", reason="observe inputs")
         exclude = [m for m in chk["outlier_candidates"] if m != T.MAIN_MODEL]
         exclude += [m for m, v in chk["models"].items() if v["hours"] < 48 and m != T.MAIN_MODEL]
@@ -136,6 +143,9 @@ class RuleAgent(BaseAgent):
             if rv.get("available"):
                 actions.append(f"средняя правка P50 {rv['mean_abs_revision']:.2f}")
             self.call("validate_forecast", reason="verify after update")
+        bid = self.call("recommend_bid", reason="план подачи на балансирующий рынок")
+        if "critical_quantile" in bid:
+            actions.append(f"план подачи на БРЭ = квантиль P{bid['critical_quantile'] * 100:.0f} прогноза")
         if exclude:
             actions.append(f"исключены источники: {', '.join(exclude)}")
         if rev.get("large_revision"):

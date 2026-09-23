@@ -119,7 +119,7 @@ with tab4:
         from hackalem.forecast import load_models
         from hackalem.weather.store import load_store
         with st.spinner("Агент работает…"):
-            s = ForecastSession(pd.Timestamp(issue), models=load_models(), store=load_store())
+            s = ForecastSession(pd.Timestamp(issue), models=load_models(), archive=load_store())
             agent = make_agent(mode, s)
             agent.run()
         p = s.final[s.final["unit"] == "plant"]

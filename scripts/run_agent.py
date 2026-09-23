@@ -41,16 +41,16 @@ cfg = load_config()
 
 def run(issues, models, mode, out_dir):
     (out_dir / "logs").mkdir(parents=True, exist_ok=True)
-    store = load_store()
+    archive = load_store()   # offline fallback only; the agent fetches weather itself
     prev, finals, digest = None, [], []
     for d in issues:
-        s = ForecastSession(d, models=models, store=store)
+        s = ForecastSession(d, models=models, archive=archive)
         agent = make_agent(mode, s, prev)
         try:
             agent.run()
         except Exception as e:  # noqa: BLE001 - LLM/network failure -> rules fallback
             print(f"  {d.date()}: {agent.mode} agent failed ({e}); falling back to rules")
-            s = ForecastSession(d, models=models, store=store)
+            s = ForecastSession(d, models=models, archive=archive)
             agent = make_agent("rules", s, prev)
             agent.run()
         with open(out_dir / "logs" / f"{d.date()}.json", "w", encoding="utf-8") as f:

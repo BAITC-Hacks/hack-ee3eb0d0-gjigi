@@ -19,6 +19,12 @@ agent:            ## stage 5: agent over Feb 2026 (LLM if OPENAI_API_KEY in .env
 	$(PY) scripts/run_agent.py --mode auto
 rehearsal:        ## agent on Jan 2026 with models that never saw Dec-Jan, scored vs SCADA
 	$(PY) scripts/run_agent.py --mode auto --rehearsal
+live:             ## real forecast for the next two days, from the freshest NWP runs (internet)
+	$(PY) scripts/forecast_live.py --mode auto
+stress:           ## fault injection: broken/missing NWP sources, pipeline vs agent (Jan 2026)
+	$(PY) scripts/agent_stress_test.py
+economics:        ## balancing-market value of the forecast (Jan 2026 rehearsal)
+	$(PY) scripts/economics_eval.py
 demo:             ## dashboard on http://localhost:8501
 	$(PY) -m streamlit run app.py
 test:

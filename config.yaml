@@ -112,3 +112,9 @@ agent:
   max_hourly_ramp: 0.6
   large_revision: 0.12            # mean |Δ P50| vs previous forecast
   update_window_h: 6              # look for NWP runs published within this window
+
+# Balancing-market economics (optional "recommend_bid" tool). Illustrative prices,
+# order of magnitude from Kazakhstan's balancing market; replace with real tariffs.
+economics:
+  shortfall_cost_tg_per_kwh: 40   # plant delivers less than planned
+  surplus_loss_tg_per_kwh: 18     # plant delivers more than planned (sold cheaper)
