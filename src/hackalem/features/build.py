@@ -24,6 +24,9 @@ TARGETS = ["y_plant", "y_T1", "y_T2", "y_plant_raw"]
 
 def _derive_row_vars(df: pd.DataFrame) -> pd.DataFrame:
     d = df.copy()
+    num = [c for c in d.columns if c not in ("model", "issue_date", "issue_time_utc", "time_local", "is_target",
+                                             "valid_time", "init_time", "available_at")]
+    d[num] = d[num].apply(pd.to_numeric, errors="coerce").astype(float)
     rad = np.deg2rad(d["wind_direction_100m"])
     d["wd100_sin"], d["wd100_cos"] = np.sin(rad), np.cos(rad)
     # air density from NWP surface pressure (hPa) and 2 m temperature

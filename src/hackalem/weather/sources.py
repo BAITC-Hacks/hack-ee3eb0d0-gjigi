@@ -41,6 +41,8 @@ def fetch_single_run(client: OpenMeteoClient, cfg: dict, model: str,
     df.insert(1, "init_time", init)
     df.insert(3, "lead_h", ((df["valid_time"] - init) / pd.Timedelta("1h")).astype(int))
     var_cols = w["single_run_variables"]
+    # JSON nulls can make a column 'object' when a variable is entirely missing
+    df[var_cols] = df[var_cols].apply(pd.to_numeric, errors="coerce").astype(float)
     df = df.dropna(subset=var_cols, how="all")
     return df[STORE_KEYS + var_cols]
 
@@ -62,6 +64,7 @@ def fetch_previous_runs(client: OpenMeteoClient, cfg: dict, model: str,
     for n in days:
         cols = {v: h.get(f"{v}_previous_day{n}") for v in variables}
         df = pd.DataFrame({v: (c if c is not None else np.nan) for v, c in cols.items()})
+        df = df.apply(pd.to_numeric, errors="coerce").astype(float)
         df.insert(0, "valid_time", valid)
         df = df.dropna(subset=variables, how="all")
         df["init_time"] = df["valid_time"].dt.floor("6h") - pd.Timedelta(days=n)
