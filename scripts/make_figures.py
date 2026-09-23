@@ -51,13 +51,22 @@ def fig_jan():
 
 
 def fig_bars():
-    fig, axes = plt.subplots(1, 3, figsize=(14, 4))
+    hold = pd.read_csv(DOCS / "baselines" / "holdout_metrics.csv")
+    hold = hold[(hold["target"] == "y_plant") & hold["day_ahead"].isna()].set_index("model")["mae"]
+    model = pd.read_csv(DOCS / "model" / "holdout_metrics.csv")
+    model_mae = float(model[(model["target"] == "y_plant") & (model["day_ahead"] == "all")]["mae_p50"].iloc[0])
+    st = pd.read_csv(DOCS / "agent_stress" / "stress_results.csv")
+    st = st[st["scenario"] == "gfs_garbage"].groupby("system")["mae"].mean()
+    eco = pd.read_csv(DOCS / "economics" / "economics.csv")["cost"].to_numpy() / 1000
     items = [("Точность (MAE, holdout дек–янв)",
-              ["Климатология", "NWP + кривая\nмощности", "Наша модель"], [0.321, 0.192, 0.175], "{:.3f}"),
+              ["Климатология", "NWP + кривая\nмощности", "Наша модель"],
+              [hold["climatology"], hold["curve[ens_ws100_mean]+linear_cal"], model_mae], "{:.3f}"),
              ("Стресс-тест: GFS выдаёт мусор (MAE)",
-              ["Конвейер\nбез агента", "Агент\n(правила)", "Агент\n(LLM)"], [0.307, 0.161, 0.160], "{:.3f}"),
+              ["Конвейер\nбез агента", "Агент\n(правила)", "Агент\n(LLM)"],
+              [st["pipeline"], st["rules"], st.get("llm", float("nan"))], "{:.3f}"),
              ("Небалансы БРЭ, тыс. тг/МВт·мес",
-              ["Климатология", "Агент,\nмедиана", "Агент,\nквантиль P31"], [6240, 3642, 2680], "{:,.0f}")]
+              ["Климатология", "Агент,\nмедиана", "Агент,\nквантиль P31"], [eco[0], eco[3], eco[4]], "{:,.0f}")]
+    fig, axes = plt.subplots(1, 3, figsize=(14, 4))
     for ax, (title, labels, vals, fmt) in zip(axes, items):
         bars = ax.bar(labels, vals, color=["#bbbbbb", "#9ecae1", "#1f77b4"])
         for bar, v in zip(bars, vals):

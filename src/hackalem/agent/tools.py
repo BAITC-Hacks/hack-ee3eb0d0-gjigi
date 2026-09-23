@@ -103,11 +103,18 @@ def run_forecast(s: ForecastSession, exclude_models: list[str] | None = None) ->
     """Run the ML forecast (plant, T1, T2) with the current inputs."""
     if not len(s.store):
         return {"error": "no weather data - call fetch_weather first"}
+    guardrail = None
     if exclude_models is not None:
-        bad = [m for m in exclude_models if m == MAIN_MODEL and len(exclude_models) > 2]
-        if bad:
-            return {"error": "refusing to drop ECMWF together with most other sources"}
-        s.excluded = list(exclude_models)
+        exclude_models = list(exclude_models)
+        if MAIN_MODEL in exclude_models:
+            # Guardrail in code, not only in the prompt: the most accurate source may be
+            # dropped only if it is actually broken (incomplete coverage).
+            chk = check_weather_inputs(s)
+            hours = chk.get("models", {}).get(MAIN_MODEL, {}).get("hours", 0)
+            if hours >= 48:
+                exclude_models.remove(MAIN_MODEL)
+                guardrail = f"{MAIN_MODEL} is healthy ({hours}/48 h) - exclusion refused, kept in the ensemble"
+        s.excluded = exclude_models
     if s.result is not None:
         s.history.append(s.result)
     s.result = run_issue(s.issue_date, models=s.models, store=s.store,
@@ -115,7 +122,10 @@ def run_forecast(s: ForecastSession, exclude_models: list[str] | None = None) ->
     keep, s.widen_factor = s.widen_factor, 1.0
     if keep > 1.0:            # a decision to widen survives a re-run
         widen_intervals(s, keep)
-    return {"status": "ok", "excluded_models": s.excluded, "widen_factor": s.widen_factor, **summarize(s)}
+    out = {"status": "ok", "excluded_models": s.excluded, "widen_factor": s.widen_factor, **summarize(s)}
+    if guardrail:
+        out["guardrail"] = guardrail
+    return out
 
 
 def summarize(s: ForecastSession) -> dict:

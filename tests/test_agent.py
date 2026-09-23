@@ -52,3 +52,16 @@ def test_forecast_survives_any_missing_source(missing):
     st = load_store()
     fc = run_issue("2026-01-15", models=load_models(), store=st[st["model"] != missing]).forecast
     assert fc[["p10", "p50", "p90"]].notna().all().all() and len(fc) == 3 * 48
+
+
+def test_guardrail_keeps_healthy_ecmwf():
+    """Even if the LLM asks to drop the healthy main source, code refuses."""
+    from hackalem.agent import tools as T
+    from hackalem.forecast import load_models
+    from hackalem.weather.store import load_store
+
+    s = T.ForecastSession("2026-01-10", models=load_models(), archive=load_store())
+    T.fetch_weather(s)
+    res = T.run_forecast(s, exclude_models=["gfs_seamless", "ecmwf_ifs"])
+    assert "ecmwf_ifs" not in s.excluded and "gfs_seamless" in s.excluded
+    assert "guardrail" in res
