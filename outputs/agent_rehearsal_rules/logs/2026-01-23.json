@@ -1,0 +1,266 @@
+{
+  "issue_date": "2026-01-23",
+  "mode": "rules",
+  "final_issue_time_local": "2026-01-23 14:00:00",
+  "excluded_models": [],
+  "widen_factor": 1.0,
+  "dispatcher_note": "D+1 (2026-01-24): высокая выработка, средняя 71% от номинала, часов >80%: 14, штиль (<5%): 0 ч, ширина интервала 0.26. D+2 (2026-01-25): средняя выработка, средняя 28% от номинала, часов >80%: 3, штиль (<5%): 8 ч, ширина интервала 0.42. Действия агента: пересчёт после публикации прогонов 2026-01-23 00z (итоговый выпуск 14:00); средняя правка P50 0.03.",
+  "steps": [
+    {
+      "step": 1,
+      "tool": "check_weather_inputs",
+      "args": {},
+      "reason": "observe inputs",
+      "result": {
+        "issue_date": "2026-01-23",
+        "as_of_local": "2026-01-23 10:00:00",
+        "models": {
+          "ecmwf_ifs": {
+            "hours": 48,
+            "newest_run": "2026-01-22 18z",
+            "run_age_h": 10.0,
+            "mean_ws100": 5.89,
+            "mean_abs_dev_from_median": 2.15
+          },
+          "ecmwf_ifs025": {
+            "hours": 48,
+            "newest_run": "2026-01-22 18z",
+            "run_age_h": 10.0,
+            "mean_ws100": 7.93,
+            "mean_abs_dev_from_median": 1.21
+          },
+          "gfs_seamless": {
+            "hours": 48,
+            "newest_run": "2026-01-22 18z",
+            "run_age_h": 10.0,
+            "mean_ws100": 8.99,
+            "mean_abs_dev_from_median": 1.72
+          },
+          "icon_seamless": {
+            "hours": 48,
+            "newest_run": "2026-01-22 18z",
+            "run_age_h": 10.0,
+            "mean_ws100": 8.92,
+            "mean_abs_dev_from_median": 2.14
+          }
+        },
+        "missing_models": [],
+        "excluded_models": [],
+        "ensemble_spread_ms": {
+          "mean": 2.45,
+          "max": 3.97,
+          "hours_above_threshold": 20
+        },
+        "outlier_candidates": [],
+        "thresholds": {
+          "outlier_model_dev_ms": 3.0,
+          "high_spread_ms": 2.5
+        }
+      },
+      "seconds": 0.0
+    },
+    {
+      "step": 2,
+      "tool": "run_forecast",
+      "args": {
+        "exclude_models": []
+      },
+      "reason": "all sources healthy",
+      "result": {
+        "status": "ok",
+        "excluded_models": [],
+        "widen_factor": 1.0,
+        "plant": {
+          "D+1": {
+            "date": "2026-01-24",
+            "mean_p50": 0.669,
+            "max_p50": 0.992,
+            "hours_above_0.8": 14,
+            "hours_below_0.05": 1,
+            "mean_interval_width": 0.24,
+            "expected_energy_share": 0.665
+          },
+          "D+2": {
+            "date": "2026-01-25",
+            "mean_p50": 0.283,
+            "max_p50": 0.941,
+            "hours_above_0.8": 4,
+            "hours_below_0.05": 7,
+            "mean_interval_width": 0.413,
+            "expected_energy_share": 0.302
+          }
+        },
+        "runs_used": {
+          "ecmwf_ifs": [
+            "2026-01-22 18z"
+          ],
+          "ecmwf_ifs025": [
+            "2026-01-22 00z",
+            "2026-01-22 06z",
+            "2026-01-22 12z",
+            "2026-01-22 18z"
+          ],
+          "gfs_seamless": [
+            "2026-01-22 00z",
+            "2026-01-22 06z",
+            "2026-01-22 12z",
+            "2026-01-22 18z"
+          ],
+          "icon_seamless": [
+            "2026-01-22 00z",
+            "2026-01-22 06z",
+            "2026-01-22 12z",
+            "2026-01-22 18z"
+          ]
+        }
+      },
+      "seconds": 0.02
+    },
+    {
+      "step": 3,
+      "tool": "validate_forecast",
+      "args": {},
+      "reason": "verify",
+      "result": {
+        "ok": true,
+        "issues": [],
+        "mean_interval_width": 0.327,
+        "max_hourly_ramp": 0.359,
+        "plant_vs_turbines_gap": 0.016
+      },
+      "seconds": 0.0
+    },
+    {
+      "step": 4,
+      "tool": "compare_with_previous",
+      "args": {},
+      "reason": "consistency with yesterday",
+      "result": {
+        "available": true,
+        "hours": 24,
+        "mean_abs_revision": 0.044,
+        "mean_revision": 0.0,
+        "max_abs_revision": 0.29,
+        "largest_revision_at": "2026-01-24 00:00:00",
+        "large_revision": false
+      },
+      "seconds": 0.0
+    },
+    {
+      "step": 5,
+      "tool": "check_for_new_runs",
+      "args": {},
+      "reason": "look for fresher NWP",
+      "result": {
+        "current_as_of_local": "2026-01-23 10:00:00",
+        "checked_until_local": "2026-01-23 16:00:00",
+        "new_runs": {
+          "ecmwf_ifs": "2026-01-23 00z",
+          "ecmwf_ifs025": "2026-01-23 00z",
+          "gfs_seamless": "2026-01-23 00z",
+          "icon_seamless": "2026-01-23 00z"
+        },
+        "update_time_local": "2026-01-23 14:00:00"
+      },
+      "seconds": 0.0
+    },
+    {
+      "step": 6,
+      "tool": "rerun_with_update",
+      "args": {},
+      "reason": "fresher run published",
+      "result": {
+        "status": "ok",
+        "new_as_of_local": "2026-01-23 14:00:00",
+        "new_runs": {
+          "ecmwf_ifs": "2026-01-23 00z",
+          "ecmwf_ifs025": "2026-01-23 00z",
+          "gfs_seamless": "2026-01-23 00z",
+          "icon_seamless": "2026-01-23 00z"
+        },
+        "revision_vs_before_update": {
+          "available": true,
+          "hours": 48,
+          "mean_abs_revision": 0.029,
+          "mean_revision": 0.02,
+          "max_abs_revision": 0.184,
+          "largest_revision_at": "2026-01-24 09:00:00",
+          "large_revision": false
+        },
+        "excluded_models": [],
+        "widen_factor": 1.0,
+        "plant": {
+          "D+1": {
+            "date": "2026-01-24",
+            "mean_p50": 0.707,
+            "max_p50": 0.992,
+            "hours_above_0.8": 14,
+            "hours_below_0.05": 0,
+            "mean_interval_width": 0.257,
+            "expected_energy_share": 0.697
+          },
+          "D+2": {
+            "date": "2026-01-25",
+            "mean_p50": 0.284,
+            "max_p50": 0.936,
+            "hours_above_0.8": 3,
+            "hours_below_0.05": 8,
+            "mean_interval_width": 0.42,
+            "expected_energy_share": 0.297
+          }
+        },
+        "runs_used": {
+          "ecmwf_ifs": [
+            "2026-01-23 00z"
+          ],
+          "ecmwf_ifs025": [
+            "2026-01-22 06z",
+            "2026-01-22 12z",
+            "2026-01-22 18z",
+            "2026-01-23 00z"
+          ],
+          "gfs_seamless": [
+            "2026-01-22 06z",
+            "2026-01-22 12z",
+            "2026-01-22 18z",
+            "2026-01-23 00z"
+          ],
+          "icon_seamless": [
+            "2026-01-22 06z",
+            "2026-01-22 12z",
+            "2026-01-22 18z",
+            "2026-01-23 00z"
+          ]
+        }
+      },
+      "seconds": 0.02
+    },
+    {
+      "step": 7,
+      "tool": "validate_forecast",
+      "args": {},
+      "reason": "verify after update",
+      "result": {
+        "ok": true,
+        "issues": [],
+        "mean_interval_width": 0.339,
+        "max_hourly_ramp": 0.314,
+        "plant_vs_turbines_gap": 0.016
+      },
+      "seconds": 0.0
+    },
+    {
+      "step": 8,
+      "tool": "finalize",
+      "args": {
+        "dispatcher_note": "D+1 (2026-01-24): высокая выработка, средняя 71% от номинала, часов >80%: 14, штиль (<5%): 0 ч, ширина интервала 0.26. D+2 (2026-01-25): средняя выработка, средняя 28% от номинала, часов >80%: 3, штиль (<5%): 8 ч, ширина интервала 0.42. Действия агента: пересчёт после публикации прогонов 2026-01-23 00z (итоговый выпуск 14:00); средняя правка P50 0.03."
+      },
+      "reason": "done",
+      "result": {
+        "status": "finalized",
+        "issue_time_local": "2026-01-23 14:00:00"
+      },
+      "seconds": 0.0
+    }
+  ]
+}

@@ -1,0 +1,250 @@
+{
+  "issue_date": "2026-02-02",
+  "mode": "llm",
+  "final_issue_time_local": "2026-02-02 14:00:00",
+  "excluded_models": [],
+  "widen_factor": 1.0,
+  "dispatcher_note": "Ожидаемая выработка на D+1 составляет 19.5% (макс. 42.4%), на D+2 - 26.0% (макс. 61.4%). Ожидаются спокойные периоды с низкой выработкой. Прогноз был обновлён с учётом новых запусков NWP, что привело к небольшим изменениям в значениях.",
+  "steps": [
+    {
+      "step": 1,
+      "tool": "check_weather_inputs",
+      "args": {},
+      "reason": "Проверяю входные данные о погоде для оценки их покрытия, свежести и согласованности.",
+      "result": {
+        "issue_date": "2026-02-02",
+        "as_of_local": "2026-02-02 10:00:00",
+        "models": {
+          "ecmwf_ifs": {
+            "hours": 48,
+            "newest_run": "2026-02-01 18z",
+            "run_age_h": 10.0,
+            "mean_ws100": 5.18,
+            "mean_abs_dev_from_median": 0.91
+          },
+          "ecmwf_ifs025": {
+            "hours": 48,
+            "newest_run": "2026-02-01 18z",
+            "run_age_h": 10.0,
+            "mean_ws100": 6.28,
+            "mean_abs_dev_from_median": 1.37
+          },
+          "gfs_seamless": {
+            "hours": 48,
+            "newest_run": "2026-02-01 18z",
+            "run_age_h": 10.0,
+            "mean_ws100": 5.33,
+            "mean_abs_dev_from_median": 2.51
+          },
+          "icon_seamless": {
+            "hours": 48,
+            "newest_run": "2026-02-01 18z",
+            "run_age_h": 10.0,
+            "mean_ws100": 4.66,
+            "mean_abs_dev_from_median": 1.34
+          }
+        },
+        "missing_models": [],
+        "excluded_models": [],
+        "ensemble_spread_ms": {
+          "mean": 2.17,
+          "max": 4.08,
+          "hours_above_threshold": 17
+        },
+        "outlier_candidates": [],
+        "thresholds": {
+          "outlier_model_dev_ms": 3.0,
+          "high_spread_ms": 2.5
+        }
+      },
+      "seconds": 0.02
+    },
+    {
+      "step": 2,
+      "tool": "run_forecast",
+      "args": {},
+      "reason": "Запускаю прогноз на основе доступных моделей, так как входные данные о погоде проверены и не содержат выбросов.",
+      "result": {
+        "status": "ok",
+        "excluded_models": [],
+        "widen_factor": 1.0,
+        "plant": {
+          "D+1": {
+            "date": "2026-02-03",
+            "mean_p50": 0.201,
+            "max_p50": 0.464,
+            "hours_above_0.8": 0,
+            "hours_below_0.05": 2,
+            "mean_interval_width": 0.51,
+            "expected_energy_share": 0.253
+          },
+          "D+2": {
+            "date": "2026-02-04",
+            "mean_p50": 0.213,
+            "max_p50": 0.554,
+            "hours_above_0.8": 0,
+            "hours_below_0.05": 7,
+            "mean_interval_width": 0.545,
+            "expected_energy_share": 0.28
+          }
+        },
+        "runs_used": {
+          "ecmwf_ifs": [
+            "2026-02-01 18z"
+          ],
+          "ecmwf_ifs025": [
+            "2026-02-01 00z",
+            "2026-02-01 06z",
+            "2026-02-01 12z",
+            "2026-02-01 18z"
+          ],
+          "gfs_seamless": [
+            "2026-02-01 00z",
+            "2026-02-01 06z",
+            "2026-02-01 12z",
+            "2026-02-01 18z"
+          ],
+          "icon_seamless": [
+            "2026-02-01 00z",
+            "2026-02-01 06z",
+            "2026-02-01 12z",
+            "2026-02-01 18z"
+          ]
+        }
+      },
+      "seconds": 0.04
+    },
+    {
+      "step": 3,
+      "tool": "validate_forecast",
+      "args": {},
+      "reason": "Проверяю прогноз на наличие проблем, чтобы убедиться в его корректности.",
+      "result": {
+        "ok": true,
+        "issues": [],
+        "mean_interval_width": 0.528,
+        "max_hourly_ramp": 0.224,
+        "plant_vs_turbines_gap": 0.015
+      },
+      "seconds": 0.0
+    },
+    {
+      "step": 4,
+      "tool": "compare_with_previous",
+      "args": {},
+      "reason": "Сравниваю с прогнозом предыдущего дня, чтобы выявить значительные изменения.",
+      "result": {
+        "available": true,
+        "hours": 24,
+        "mean_abs_revision": 0.079,
+        "mean_revision": 0.074,
+        "max_abs_revision": 0.286,
+        "largest_revision_at": "2026-02-03 03:00:00",
+        "large_revision": false
+      },
+      "seconds": 0.0
+    },
+    {
+      "step": 5,
+      "tool": "check_for_new_runs",
+      "args": {},
+      "reason": "Проверяю наличие новых запусков NWP, чтобы обновить прогноз, если это необходимо.",
+      "result": {
+        "current_as_of_local": "2026-02-02 10:00:00",
+        "checked_until_local": "2026-02-02 16:00:00",
+        "new_runs": {
+          "ecmwf_ifs": "2026-02-02 00z",
+          "ecmwf_ifs025": "2026-02-02 00z",
+          "gfs_seamless": "2026-02-02 00z",
+          "icon_seamless": "2026-02-02 00z"
+        },
+        "update_time_local": "2026-02-02 14:00:00"
+      },
+      "seconds": 0.0
+    },
+    {
+      "step": 6,
+      "tool": "rerun_with_update",
+      "args": {},
+      "reason": "Обновляю прогноз с новыми запусками NWP, чтобы учесть последние данные.",
+      "result": {
+        "status": "ok",
+        "new_as_of_local": "2026-02-02 14:00:00",
+        "new_runs": {
+          "ecmwf_ifs": "2026-02-02 00z",
+          "ecmwf_ifs025": "2026-02-02 00z",
+          "gfs_seamless": "2026-02-02 00z",
+          "icon_seamless": "2026-02-02 00z"
+        },
+        "revision_vs_before_update": {
+          "available": true,
+          "hours": 48,
+          "mean_abs_revision": 0.048,
+          "mean_revision": 0.021,
+          "max_abs_revision": 0.292,
+          "largest_revision_at": "2026-02-04 10:00:00",
+          "large_revision": false
+        },
+        "excluded_models": [],
+        "widen_factor": 1.0,
+        "plant": {
+          "D+1": {
+            "date": "2026-02-03",
+            "mean_p50": 0.195,
+            "max_p50": 0.424,
+            "hours_above_0.8": 0,
+            "hours_below_0.05": 2,
+            "mean_interval_width": 0.512,
+            "expected_energy_share": 0.255
+          },
+          "D+2": {
+            "date": "2026-02-04",
+            "mean_p50": 0.26,
+            "max_p50": 0.614,
+            "hours_above_0.8": 0,
+            "hours_below_0.05": 5,
+            "mean_interval_width": 0.604,
+            "expected_energy_share": 0.315
+          }
+        },
+        "runs_used": {
+          "ecmwf_ifs": [
+            "2026-02-02 00z"
+          ],
+          "ecmwf_ifs025": [
+            "2026-02-01 06z",
+            "2026-02-01 12z",
+            "2026-02-01 18z",
+            "2026-02-02 00z"
+          ],
+          "gfs_seamless": [
+            "2026-02-01 06z",
+            "2026-02-01 12z",
+            "2026-02-01 18z",
+            "2026-02-02 00z"
+          ],
+          "icon_seamless": [
+            "2026-02-01 06z",
+            "2026-02-01 12z",
+            "2026-02-01 18z",
+            "2026-02-02 00z"
+          ]
+        }
+      },
+      "seconds": 0.05
+    },
+    {
+      "step": 7,
+      "tool": "finalize",
+      "args": {
+        "dispatcher_note": "Ожидаемая выработка на D+1 составляет 19.5% (макс. 42.4%), на D+2 - 26.0% (макс. 61.4%). Ожидаются спокойные периоды с низкой выработкой. Прогноз был обновлён с учётом новых запусков NWP, что привело к небольшим изменениям в значениях."
+      },
+      "reason": "Завершаю процесс с окончательным прогнозом и заметкой для диспетчера.",
+      "result": {
+        "status": "finalized",
+        "issue_time_local": "2026-02-02 14:00:00"
+      },
+      "seconds": 0.0
+    }
+  ]
+}

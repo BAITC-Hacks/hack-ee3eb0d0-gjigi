@@ -1,0 +1,250 @@
+{
+  "issue_date": "2026-01-15",
+  "mode": "llm",
+  "final_issue_time_local": "2026-01-15 14:00:00",
+  "excluded_models": [],
+  "widen_factor": 1.0,
+  "dispatcher_note": "Ожидаемая выработка на D+1 составляет 0.334, с максимальным значением 0.941, с 4 часами выше 0.8. На D+2 ожидаемая выработка 0.597, с максимальным значением 0.988, с 12 часами выше 0.8. Периоды ветреной погоды ожидаются, но также есть часы с низкой выработкой. Прогноз был обновлён с новыми запусками NWP для повышения точности.",
+  "steps": [
+    {
+      "step": 1,
+      "tool": "check_weather_inputs",
+      "args": {},
+      "reason": "Проверяю входные данные о погоде для оценки их покрытия, свежести и согласованности.",
+      "result": {
+        "issue_date": "2026-01-15",
+        "as_of_local": "2026-01-15 10:00:00",
+        "models": {
+          "ecmwf_ifs": {
+            "hours": 48,
+            "newest_run": "2026-01-14 18z",
+            "run_age_h": 10.0,
+            "mean_ws100": 5.23,
+            "mean_abs_dev_from_median": 2.81
+          },
+          "ecmwf_ifs025": {
+            "hours": 48,
+            "newest_run": "2026-01-14 18z",
+            "run_age_h": 10.0,
+            "mean_ws100": 8.03,
+            "mean_abs_dev_from_median": 0.76
+          },
+          "gfs_seamless": {
+            "hours": 48,
+            "newest_run": "2026-01-14 18z",
+            "run_age_h": 10.0,
+            "mean_ws100": 9.85,
+            "mean_abs_dev_from_median": 2.19
+          },
+          "icon_seamless": {
+            "hours": 48,
+            "newest_run": "2026-01-14 18z",
+            "run_age_h": 10.0,
+            "mean_ws100": 8.64,
+            "mean_abs_dev_from_median": 1.19
+          }
+        },
+        "missing_models": [],
+        "excluded_models": [],
+        "ensemble_spread_ms": {
+          "mean": 2.45,
+          "max": 4.0,
+          "hours_above_threshold": 23
+        },
+        "outlier_candidates": [],
+        "thresholds": {
+          "outlier_model_dev_ms": 3.0,
+          "high_spread_ms": 2.5
+        }
+      },
+      "seconds": 0.02
+    },
+    {
+      "step": 2,
+      "tool": "run_forecast",
+      "args": {},
+      "reason": "Запускаю прогноз на основе доступных моделей, так как все источники погоды согласованы и свежи.",
+      "result": {
+        "status": "ok",
+        "excluded_models": [],
+        "widen_factor": 1.0,
+        "plant": {
+          "D+1": {
+            "date": "2026-01-16",
+            "mean_p50": 0.351,
+            "max_p50": 0.904,
+            "hours_above_0.8": 3,
+            "hours_below_0.05": 2,
+            "mean_interval_width": 0.5,
+            "expected_energy_share": 0.357
+          },
+          "D+2": {
+            "date": "2026-01-17",
+            "mean_p50": 0.587,
+            "max_p50": 0.988,
+            "hours_above_0.8": 12,
+            "hours_below_0.05": 2,
+            "mean_interval_width": 0.317,
+            "expected_energy_share": 0.582
+          }
+        },
+        "runs_used": {
+          "ecmwf_ifs": [
+            "2026-01-14 18z"
+          ],
+          "ecmwf_ifs025": [
+            "2026-01-14 00z",
+            "2026-01-14 06z",
+            "2026-01-14 12z",
+            "2026-01-14 18z"
+          ],
+          "gfs_seamless": [
+            "2026-01-14 00z",
+            "2026-01-14 06z",
+            "2026-01-14 12z",
+            "2026-01-14 18z"
+          ],
+          "icon_seamless": [
+            "2026-01-14 00z",
+            "2026-01-14 06z",
+            "2026-01-14 12z",
+            "2026-01-14 18z"
+          ]
+        }
+      },
+      "seconds": 0.05
+    },
+    {
+      "step": 3,
+      "tool": "validate_forecast",
+      "args": {},
+      "reason": "Проверяю прогноз на наличие проблем, чтобы убедиться в его корректности.",
+      "result": {
+        "ok": true,
+        "issues": [],
+        "mean_interval_width": 0.408,
+        "max_hourly_ramp": 0.282,
+        "plant_vs_turbines_gap": 0.018
+      },
+      "seconds": 0.01
+    },
+    {
+      "step": 4,
+      "tool": "compare_with_previous",
+      "args": {},
+      "reason": "Сравниваю с прогнозом предыдущего дня, чтобы выявить значительные изменения.",
+      "result": {
+        "available": true,
+        "hours": 24,
+        "mean_abs_revision": 0.062,
+        "mean_revision": -0.038,
+        "max_abs_revision": 0.157,
+        "largest_revision_at": "2026-01-16 14:00:00",
+        "large_revision": false
+      },
+      "seconds": 0.01
+    },
+    {
+      "step": 5,
+      "tool": "check_for_new_runs",
+      "args": {},
+      "reason": "Проверяю наличие новых запусков NWP, чтобы обновить прогноз, если это необходимо.",
+      "result": {
+        "current_as_of_local": "2026-01-15 10:00:00",
+        "checked_until_local": "2026-01-15 16:00:00",
+        "new_runs": {
+          "ecmwf_ifs": "2026-01-15 00z",
+          "ecmwf_ifs025": "2026-01-15 00z",
+          "gfs_seamless": "2026-01-15 00z",
+          "icon_seamless": "2026-01-15 00z"
+        },
+        "update_time_local": "2026-01-15 14:00:00"
+      },
+      "seconds": 0.01
+    },
+    {
+      "step": 6,
+      "tool": "rerun_with_update",
+      "args": {},
+      "reason": "Обновляю прогноз с новыми запусками NWP, так как они доступны и могут улучшить точность.",
+      "result": {
+        "status": "ok",
+        "new_as_of_local": "2026-01-15 14:00:00",
+        "new_runs": {
+          "ecmwf_ifs": "2026-01-15 00z",
+          "ecmwf_ifs025": "2026-01-15 00z",
+          "gfs_seamless": "2026-01-15 00z",
+          "icon_seamless": "2026-01-15 00z"
+        },
+        "revision_vs_before_update": {
+          "available": true,
+          "hours": 48,
+          "mean_abs_revision": 0.029,
+          "mean_revision": -0.003,
+          "max_abs_revision": 0.184,
+          "largest_revision_at": "2026-01-16 08:00:00",
+          "large_revision": false
+        },
+        "excluded_models": [],
+        "widen_factor": 1.0,
+        "plant": {
+          "D+1": {
+            "date": "2026-01-16",
+            "mean_p50": 0.334,
+            "max_p50": 0.941,
+            "hours_above_0.8": 4,
+            "hours_below_0.05": 6,
+            "mean_interval_width": 0.449,
+            "expected_energy_share": 0.347
+          },
+          "D+2": {
+            "date": "2026-01-17",
+            "mean_p50": 0.597,
+            "max_p50": 0.988,
+            "hours_above_0.8": 12,
+            "hours_below_0.05": 3,
+            "mean_interval_width": 0.292,
+            "expected_energy_share": 0.589
+          }
+        },
+        "runs_used": {
+          "ecmwf_ifs": [
+            "2026-01-15 00z"
+          ],
+          "ecmwf_ifs025": [
+            "2026-01-14 06z",
+            "2026-01-14 12z",
+            "2026-01-14 18z",
+            "2026-01-15 00z"
+          ],
+          "gfs_seamless": [
+            "2026-01-14 06z",
+            "2026-01-14 12z",
+            "2026-01-14 18z",
+            "2026-01-15 00z"
+          ],
+          "icon_seamless": [
+            "2026-01-14 06z",
+            "2026-01-14 12z",
+            "2026-01-14 18z",
+            "2026-01-15 00z"
+          ]
+        }
+      },
+      "seconds": 0.05
+    },
+    {
+      "step": 7,
+      "tool": "finalize",
+      "args": {
+        "dispatcher_note": "Ожидаемая выработка на D+1 составляет 0.334, с максимальным значением 0.941, с 4 часами выше 0.8. На D+2 ожидаемая выработка 0.597, с максимальным значением 0.988, с 12 часами выше 0.8. Периоды ветреной погоды ожидаются, но также есть часы с низкой выработкой. Прогноз был обновлён с новыми запусками NWP для повышения точности."
+      },
+      "reason": "Завершаю процесс с окончательным прогнозом и заметкой для диспетчера.",
+      "result": {
+        "status": "finalized",
+        "issue_time_local": "2026-01-15 14:00:00"
+      },
+      "seconds": 0.01
+    }
+  ]
+}

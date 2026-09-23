@@ -1,0 +1,244 @@
+{
+  "issue_date": "2025-12-31",
+  "mode": "llm",
+  "final_issue_time_local": "2025-12-31 14:00:00",
+  "excluded_models": [
+    "gfs_seamless"
+  ],
+  "widen_factor": 1.0,
+  "dispatcher_note": "Ожидаемая выработка на 1 января 2026 года составляет 40% от максимума, с 8 часами выше 80% и 6 часами ниже 5%. На 2 января 2026 года ожидаемая выработка составляет 12.3%, с 11 часами ниже 5%. Прогноз стал более оптимистичным по сравнению с предыдущим, так как обновленные данные показывают более высокие значения. Исключена модель gfs_seamless из-за аномалий.",
+  "steps": [
+    {
+      "step": 1,
+      "tool": "check_weather_inputs",
+      "args": {},
+      "reason": "Проверяю входные данные о погоде для оценки их покрытия, свежести и согласованности.",
+      "result": {
+        "issue_date": "2025-12-31",
+        "as_of_local": "2025-12-31 10:00:00",
+        "models": {
+          "ecmwf_ifs": {
+            "hours": 48,
+            "newest_run": "2025-12-30 18z",
+            "run_age_h": 10.0,
+            "mean_ws100": 4.59,
+            "mean_abs_dev_from_median": 1.11
+          },
+          "ecmwf_ifs025": {
+            "hours": 48,
+            "newest_run": "2025-12-30 18z",
+            "run_age_h": 10.0,
+            "mean_ws100": 5.3,
+            "mean_abs_dev_from_median": 1.09
+          },
+          "gfs_seamless": {
+            "hours": 48,
+            "newest_run": "2025-12-30 18z",
+            "run_age_h": 10.0,
+            "mean_ws100": 5.86,
+            "mean_abs_dev_from_median": 3.25
+          },
+          "icon_seamless": {
+            "hours": 48,
+            "newest_run": "2025-12-30 18z",
+            "run_age_h": 10.0,
+            "mean_ws100": 3.62,
+            "mean_abs_dev_from_median": 1.46
+          }
+        },
+        "missing_models": [],
+        "excluded_models": [],
+        "ensemble_spread_ms": {
+          "mean": 2.49,
+          "max": 5.98,
+          "hours_above_threshold": 18
+        },
+        "outlier_candidates": [
+          "gfs_seamless"
+        ],
+        "thresholds": {
+          "outlier_model_dev_ms": 3.0,
+          "high_spread_ms": 2.5
+        }
+      },
+      "seconds": 0.02
+    },
+    {
+      "step": 2,
+      "tool": "run_forecast",
+      "args": {
+        "exclude_models": [
+          "gfs_seamless"
+        ]
+      },
+      "reason": "Исключаю модель gfs_seamless, так как она является аномальной по сравнению с другими источниками.",
+      "result": {
+        "status": "ok",
+        "excluded_models": [
+          "gfs_seamless"
+        ],
+        "widen_factor": 1.0,
+        "plant": {
+          "D+1": {
+            "date": "2026-01-01",
+            "mean_p50": 0.288,
+            "max_p50": 0.966,
+            "hours_above_0.8": 6,
+            "hours_below_0.05": 7,
+            "mean_interval_width": 0.381,
+            "expected_energy_share": 0.32
+          },
+          "D+2": {
+            "date": "2026-01-02",
+            "mean_p50": 0.118,
+            "max_p50": 0.283,
+            "hours_above_0.8": 0,
+            "hours_below_0.05": 11,
+            "mean_interval_width": 0.407,
+            "expected_energy_share": 0.196
+          }
+        },
+        "runs_used": {
+          "ecmwf_ifs": [
+            "2025-12-30 18z"
+          ],
+          "ecmwf_ifs025": [
+            "2025-12-30 00z",
+            "2025-12-30 06z",
+            "2025-12-30 12z",
+            "2025-12-30 18z"
+          ],
+          "icon_seamless": [
+            "2025-12-30 00z",
+            "2025-12-30 06z",
+            "2025-12-30 12z",
+            "2025-12-30 18z"
+          ]
+        }
+      },
+      "seconds": 0.06
+    },
+    {
+      "step": 3,
+      "tool": "validate_forecast",
+      "args": {},
+      "reason": "Проверяю прогноз на наличие ошибок и аномалий.",
+      "result": {
+        "ok": true,
+        "issues": [],
+        "mean_interval_width": 0.394,
+        "max_hourly_ramp": 0.343,
+        "plant_vs_turbines_gap": 0.013
+      },
+      "seconds": 0.0
+    },
+    {
+      "step": 4,
+      "tool": "compare_with_previous",
+      "args": {},
+      "reason": "Сравниваю с предыдущим прогнозом, чтобы выявить значительные изменения.",
+      "result": {
+        "available": false
+      },
+      "seconds": 0.0
+    },
+    {
+      "step": 5,
+      "tool": "check_for_new_runs",
+      "args": {},
+      "reason": "Проверяю наличие новых запусков NWP, чтобы обновить прогноз, если это необходимо.",
+      "result": {
+        "current_as_of_local": "2025-12-31 10:00:00",
+        "checked_until_local": "2025-12-31 16:00:00",
+        "new_runs": {
+          "ecmwf_ifs": "2025-12-31 00z",
+          "ecmwf_ifs025": "2025-12-31 00z",
+          "gfs_seamless": "2025-12-31 00z",
+          "icon_seamless": "2025-12-31 00z"
+        },
+        "update_time_local": "2025-12-31 14:00:00"
+      },
+      "seconds": 0.0
+    },
+    {
+      "step": 6,
+      "tool": "rerun_with_update",
+      "args": {},
+      "reason": "Обновляю прогноз с новыми запусками NWP, так как они доступны.",
+      "result": {
+        "status": "ok",
+        "new_as_of_local": "2025-12-31 14:00:00",
+        "new_runs": {
+          "ecmwf_ifs": "2025-12-31 00z",
+          "ecmwf_ifs025": "2025-12-31 00z",
+          "gfs_seamless": "2025-12-31 00z",
+          "icon_seamless": "2025-12-31 00z"
+        },
+        "revision_vs_before_update": {
+          "available": true,
+          "hours": 48,
+          "mean_abs_revision": 0.074,
+          "mean_revision": 0.058,
+          "max_abs_revision": 0.62,
+          "largest_revision_at": "2026-01-01 08:00:00",
+          "large_revision": false
+        },
+        "excluded_models": [
+          "gfs_seamless"
+        ],
+        "widen_factor": 1.0,
+        "plant": {
+          "D+1": {
+            "date": "2026-01-01",
+            "mean_p50": 0.4,
+            "max_p50": 0.987,
+            "hours_above_0.8": 8,
+            "hours_below_0.05": 6,
+            "mean_interval_width": 0.365,
+            "expected_energy_share": 0.418
+          },
+          "D+2": {
+            "date": "2026-01-02",
+            "mean_p50": 0.123,
+            "max_p50": 0.305,
+            "hours_above_0.8": 0,
+            "hours_below_0.05": 11,
+            "mean_interval_width": 0.424,
+            "expected_energy_share": 0.208
+          }
+        },
+        "runs_used": {
+          "ecmwf_ifs": [
+            "2025-12-31 00z"
+          ],
+          "ecmwf_ifs025": [
+            "2025-12-30 06z",
+            "2025-12-30 12z",
+            "2025-12-30 18z",
+            "2025-12-31 00z"
+          ],
+          "icon_seamless": [
+            "2025-12-30 06z",
+            "2025-12-30 12z",
+            "2025-12-30 18z",
+            "2025-12-31 00z"
+          ]
+        }
+      },
+      "seconds": 0.06
+    },
+    {
+      "step": 7,
+      "tool": "finalize",
+      "args": {
+        "dispatcher_note": "Ожидаемая выработка на 1 января 2026 года составляет 40% от максимума, с 8 часами выше 80% и 6 часами ниже 5%. На 2 января 2026 года ожидаемая выработка составляет 12.3%, с 11 часами ниже 5%. Прогноз стал более оптимистичным по сравнению с предыдущим, так как обновленные данные показывают более высокие значения. Исключена модель gfs_seamless из-за аномалий."
+      },
+      "reason": "Завершаю процесс с окончательным прогнозом и заметкой для диспетчера.",
+      "result": {
+        "status": "finalized",
+        "issue_time_local": "2025-12-31 14:00:00"
+      },
+      "seconds": 0.0
+    }
+  ]
+}

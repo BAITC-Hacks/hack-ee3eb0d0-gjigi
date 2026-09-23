@@ -30,11 +30,14 @@ Workflow (adapt when facts require it):
 2. run_forecast.
 3. validate_forecast. If there are issues, fix them (e.g. re-run without a bad source).
 4. compare_with_previous - large revisions vs yesterday's forecast deserve an explanation.
-5. If the ensemble spread is high (many hours above threshold), widen_intervals (1.1-1.5).
+5. The interval is already calibrated. Only if the ensemble spread is very high (>= 24 hours above
+   threshold) widen_intervals by 1.1-1.25.
 6. check_for_new_runs; if a newer NWP run is published within the update window,
    call rerun_with_update to re-forecast with it and report what changed.
 7. finalize with a short dispatcher note in Russian (3-5 sentences): expected output
    for D+1 and D+2, windy/calm periods, uncertainty, what you changed and why.
+Before EVERY tool call write one short sentence (in Russian) explaining why you call it,
+based on the facts so far - this reasoning is logged for auditors.
 Be efficient: do not call the same tool twice without a reason. Always finish with finalize."""
 
 TOOL_SPECS = [
@@ -57,6 +60,13 @@ TOOL_SPECS = [
      "parameters": {"type": "object", "properties": {"dispatcher_note": {"type": "string"}},
                     "required": ["dispatcher_note"]}},
 ]
+
+
+# every tool requires a short justification that goes into the decision log
+for _t in TOOL_SPECS:
+    _t["parameters"]["properties"]["reason"] = {
+        "type": "string", "description": "One sentence in Russian: why this call, based on the facts so far."}
+    _t["parameters"]["required"] = sorted(set(_t["parameters"].get("required", [])) | {"reason"})
 
 
 class BaseAgent:
@@ -111,15 +121,17 @@ class RuleAgent(BaseAgent):
             self.call("validate_forecast", reason="verify retry")
         actions = []
         hi = chk["ensemble_spread_ms"]["hours_above_threshold"]
-        if hi >= 12:
-            f = 1.0 + min(0.5, hi / 96)
+        if hi >= 24:   # the CQR interval is already calibrated; widen only for strong disagreement
+            f = 1.0 + min(0.25, hi / 192)
             self.call("widen_intervals", {"factor": round(f, 2)}, reason=f"{hi} uncertain hours")
             actions.append(f"интервалы расширены ×{f:.2f} из-за расхождения моделей ({hi} ч)")
         rev = self.call("compare_with_previous", reason="consistency with yesterday")
         upd = self.call("check_for_new_runs", reason="look for fresher NWP")
         if upd.get("new_runs"):
             r = self.call("rerun_with_update", reason="fresher run published")
-            actions.append(f"пересчёт на свежих прогонах {', '.join(upd['new_runs'].values())}")
+            runs = sorted(set(upd["new_runs"].values()))
+            actions.append(f"пересчёт после публикации прогонов {', '.join(runs)} "
+                           f"(итоговый выпуск {r.get('new_as_of_local', '')[11:16]})")
             rv = r.get("revision_vs_before_update", {})
             if rv.get("available"):
                 actions.append(f"средняя правка P50 {rv['mean_abs_revision']:.2f}")
@@ -171,7 +183,8 @@ class LLMAgent(BaseAgent):
                 continue
             for tc in msg.tool_calls:
                 args = json.loads(tc.function.arguments or "{}")
-                res = self.call(tc.function.name, args, reason=(msg.content or "").strip())
+                reason = args.pop("reason", "") or (msg.content or "").strip()
+                res = self.call(tc.function.name, args, reason=reason)
                 msgs.append({"role": "tool", "tool_call_id": tc.id,
                              "content": json.dumps(res, ensure_ascii=False, default=str)})
             if self.s.final is not None:

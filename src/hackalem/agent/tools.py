@@ -87,8 +87,10 @@ def run_forecast(s: ForecastSession, exclude_models: list[str] | None = None) ->
         s.history.append(s.result)
     s.result = run_issue(s.issue_date, models=s.models, store=s.store,
                          as_of_utc=s.as_of_utc, exclude_models=s.excluded)
-    s.widen_factor = 1.0
-    return {"status": "ok", "excluded_models": s.excluded, **summarize(s)}
+    keep, s.widen_factor = s.widen_factor, 1.0
+    if keep > 1.0:            # a decision to widen survives a re-run
+        widen_intervals(s, keep)
+    return {"status": "ok", "excluded_models": s.excluded, "widen_factor": s.widen_factor, **summarize(s)}
 
 
 def summarize(s: ForecastSession) -> dict:

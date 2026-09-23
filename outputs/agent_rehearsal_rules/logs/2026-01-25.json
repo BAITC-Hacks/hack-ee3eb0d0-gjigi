@@ -1,0 +1,278 @@
+{
+  "issue_date": "2026-01-25",
+  "mode": "rules",
+  "final_issue_time_local": "2026-01-25 14:00:00",
+  "excluded_models": [
+    "gfs_seamless"
+  ],
+  "widen_factor": 1.14,
+  "dispatcher_note": "D+1 (2026-01-26): средняя выработка, средняя 50% от номинала, часов >80%: 4, штиль (<5%): 1 ч, ширина интервала 0.71. D+2 (2026-01-27): низкая выработка, средняя 3% от номинала, часов >80%: 0, штиль (<5%): 20 ч, ширина интервала 0.12. Действия агента: интервалы расширены ×1.14 из-за расхождения моделей (26 ч); пересчёт после публикации прогонов 2026-01-25 00z (итоговый выпуск 14:00); средняя правка P50 0.02; исключены источники: gfs_seamless.",
+  "steps": [
+    {
+      "step": 1,
+      "tool": "check_weather_inputs",
+      "args": {},
+      "reason": "observe inputs",
+      "result": {
+        "issue_date": "2026-01-25",
+        "as_of_local": "2026-01-25 10:00:00",
+        "models": {
+          "ecmwf_ifs": {
+            "hours": 48,
+            "newest_run": "2026-01-24 18z",
+            "run_age_h": 10.0,
+            "mean_ws100": 3.73,
+            "mean_abs_dev_from_median": 2.1
+          },
+          "ecmwf_ifs025": {
+            "hours": 48,
+            "newest_run": "2026-01-24 18z",
+            "run_age_h": 10.0,
+            "mean_ws100": 6.22,
+            "mean_abs_dev_from_median": 1.05
+          },
+          "gfs_seamless": {
+            "hours": 48,
+            "newest_run": "2026-01-24 18z",
+            "run_age_h": 10.0,
+            "mean_ws100": 9.17,
+            "mean_abs_dev_from_median": 3.35
+          },
+          "icon_seamless": {
+            "hours": 48,
+            "newest_run": "2026-01-24 18z",
+            "run_age_h": 10.0,
+            "mean_ws100": 5.27,
+            "mean_abs_dev_from_median": 1.03
+          }
+        },
+        "missing_models": [],
+        "excluded_models": [],
+        "ensemble_spread_ms": {
+          "mean": 2.59,
+          "max": 4.88,
+          "hours_above_threshold": 26
+        },
+        "outlier_candidates": [
+          "gfs_seamless"
+        ],
+        "thresholds": {
+          "outlier_model_dev_ms": 3.0,
+          "high_spread_ms": 2.5
+        }
+      },
+      "seconds": 0.0
+    },
+    {
+      "step": 2,
+      "tool": "run_forecast",
+      "args": {
+        "exclude_models": [
+          "gfs_seamless"
+        ]
+      },
+      "reason": "exclude ['gfs_seamless']",
+      "result": {
+        "status": "ok",
+        "excluded_models": [
+          "gfs_seamless"
+        ],
+        "widen_factor": 1.0,
+        "plant": {
+          "D+1": {
+            "date": "2026-01-26",
+            "mean_p50": 0.485,
+            "max_p50": 0.84,
+            "hours_above_0.8": 3,
+            "hours_below_0.05": 2,
+            "mean_interval_width": 0.645,
+            "expected_energy_share": 0.49
+          },
+          "D+2": {
+            "date": "2026-01-27",
+            "mean_p50": 0.027,
+            "max_p50": 0.107,
+            "hours_above_0.8": 0,
+            "hours_below_0.05": 20,
+            "mean_interval_width": 0.118,
+            "expected_energy_share": 0.069
+          }
+        },
+        "runs_used": {
+          "ecmwf_ifs": [
+            "2026-01-24 18z"
+          ],
+          "ecmwf_ifs025": [
+            "2026-01-24 00z",
+            "2026-01-24 06z",
+            "2026-01-24 12z",
+            "2026-01-24 18z"
+          ],
+          "icon_seamless": [
+            "2026-01-24 00z",
+            "2026-01-24 06z",
+            "2026-01-24 12z",
+            "2026-01-24 18z"
+          ]
+        }
+      },
+      "seconds": 0.03
+    },
+    {
+      "step": 3,
+      "tool": "validate_forecast",
+      "args": {},
+      "reason": "verify",
+      "result": {
+        "ok": true,
+        "issues": [],
+        "mean_interval_width": 0.381,
+        "max_hourly_ramp": 0.16,
+        "plant_vs_turbines_gap": 0.017
+      },
+      "seconds": 0.0
+    },
+    {
+      "step": 4,
+      "tool": "widen_intervals",
+      "args": {
+        "factor": 1.14
+      },
+      "reason": "26 uncertain hours",
+      "result": {
+        "status": "ok",
+        "factor": 1.14,
+        "mean_interval_width": 0.426
+      },
+      "seconds": 0.0
+    },
+    {
+      "step": 5,
+      "tool": "compare_with_previous",
+      "args": {},
+      "reason": "consistency with yesterday",
+      "result": {
+        "available": true,
+        "hours": 24,
+        "mean_abs_revision": 0.119,
+        "mean_revision": -0.119,
+        "max_abs_revision": 0.33,
+        "largest_revision_at": "2026-01-26 04:00:00",
+        "large_revision": false
+      },
+      "seconds": 0.0
+    },
+    {
+      "step": 6,
+      "tool": "check_for_new_runs",
+      "args": {},
+      "reason": "look for fresher NWP",
+      "result": {
+        "current_as_of_local": "2026-01-25 10:00:00",
+        "checked_until_local": "2026-01-25 16:00:00",
+        "new_runs": {
+          "ecmwf_ifs": "2026-01-25 00z",
+          "ecmwf_ifs025": "2026-01-25 00z",
+          "gfs_seamless": "2026-01-25 00z",
+          "icon_seamless": "2026-01-25 00z"
+        },
+        "update_time_local": "2026-01-25 14:00:00"
+      },
+      "seconds": 0.0
+    },
+    {
+      "step": 7,
+      "tool": "rerun_with_update",
+      "args": {},
+      "reason": "fresher run published",
+      "result": {
+        "status": "ok",
+        "new_as_of_local": "2026-01-25 14:00:00",
+        "new_runs": {
+          "ecmwf_ifs": "2026-01-25 00z",
+          "ecmwf_ifs025": "2026-01-25 00z",
+          "gfs_seamless": "2026-01-25 00z",
+          "icon_seamless": "2026-01-25 00z"
+        },
+        "revision_vs_before_update": {
+          "available": true,
+          "hours": 48,
+          "mean_abs_revision": 0.018,
+          "mean_revision": 0.005,
+          "max_abs_revision": 0.138,
+          "largest_revision_at": "2026-01-26 12:00:00",
+          "large_revision": false
+        },
+        "excluded_models": [
+          "gfs_seamless"
+        ],
+        "widen_factor": 1.14,
+        "plant": {
+          "D+1": {
+            "date": "2026-01-26",
+            "mean_p50": 0.496,
+            "max_p50": 0.845,
+            "hours_above_0.8": 4,
+            "hours_below_0.05": 1,
+            "mean_interval_width": 0.711,
+            "expected_energy_share": 0.491
+          },
+          "D+2": {
+            "date": "2026-01-27",
+            "mean_p50": 0.027,
+            "max_p50": 0.125,
+            "hours_above_0.8": 0,
+            "hours_below_0.05": 20,
+            "mean_interval_width": 0.117,
+            "expected_energy_share": 0.061
+          }
+        },
+        "runs_used": {
+          "ecmwf_ifs": [
+            "2026-01-25 00z"
+          ],
+          "ecmwf_ifs025": [
+            "2026-01-24 06z",
+            "2026-01-24 12z",
+            "2026-01-24 18z",
+            "2026-01-25 00z"
+          ],
+          "icon_seamless": [
+            "2026-01-24 06z",
+            "2026-01-24 12z",
+            "2026-01-24 18z",
+            "2026-01-25 00z"
+          ]
+        }
+      },
+      "seconds": 0.03
+    },
+    {
+      "step": 8,
+      "tool": "validate_forecast",
+      "args": {},
+      "reason": "verify after update",
+      "result": {
+        "ok": true,
+        "issues": [],
+        "mean_interval_width": 0.414,
+        "max_hourly_ramp": 0.171,
+        "plant_vs_turbines_gap": 0.015
+      },
+      "seconds": 0.0
+    },
+    {
+      "step": 9,
+      "tool": "finalize",
+      "args": {
+        "dispatcher_note": "D+1 (2026-01-26): средняя выработка, средняя 50% от номинала, часов >80%: 4, штиль (<5%): 1 ч, ширина интервала 0.71. D+2 (2026-01-27): низкая выработка, средняя 3% от номинала, часов >80%: 0, штиль (<5%): 20 ч, ширина интервала 0.12. Действия агента: интервалы расширены ×1.14 из-за расхождения моделей (26 ч); пересчёт после публикации прогонов 2026-01-25 00z (итоговый выпуск 14:00); средняя правка P50 0.02; исключены источники: gfs_seamless."
+      },
+      "reason": "done",
+      "result": {
+        "status": "finalized",
+        "issue_time_local": "2026-01-25 14:00:00"
+      },
+      "seconds": 0.0
+    }
+  ]
+}
