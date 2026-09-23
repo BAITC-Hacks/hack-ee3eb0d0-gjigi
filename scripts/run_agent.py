@@ -74,7 +74,7 @@ def run(issues, models, mode, out_dir):
     return fc, pd.DataFrame(digest)
 
 
-def write_submission(fc: pd.DataFrame):
+def write_submission(fc: pd.DataFrame, path=None):
     """The deliverable required by the task: for every daily issue, the hourly plant
     forecast for the next 24-48 h (local days D+1, D+2). One value per hour (P50).
     """
@@ -87,9 +87,9 @@ def write_submission(fc: pd.DataFrame):
         "horizon_h": ((pd.to_datetime(p["time_local"]) - issue_local) / pd.Timedelta("1h")).round().astype(int),
         "power_forecast": p["p50"].round(4),
     }).sort_values(["issue_date", "datetime"])
-    d = cfg["paths"]["submission_dir"]
-    d.mkdir(parents=True, exist_ok=True)
-    path = d / "forecast_feb2026.csv"
+    if path is None:
+        cfg["paths"]["submission_dir"].mkdir(parents=True, exist_ok=True)
+        path = cfg["paths"]["submission_dir"] / "forecast_feb2026.csv"
     out.to_csv(path, index=False)
     assert len(out) == 48 * out["issue_date"].nunique() and out["power_forecast"].between(0, 1).all()
     return path

@@ -4,6 +4,7 @@ Scenarios (applied to the weather the agent has just fetched):
   none          clean inputs
   gfs_garbage   GFS 100 m wind is corrupted (x2.5 + 4 m/s) - a broken source
   icon_outage   ICON returns nothing - a missing source
+  ecmwf_outage  ECMWF 9 km (the main source) returns nothing
 Compared on January 2026 issues (models trained before 2025-12-01) against actual SCADA:
   pipeline  - run_issue on the same corrupted inputs, no agent
   rules     - rule agent
@@ -37,6 +38,7 @@ except ImportError:
     pass
 
 cfg = load_config()
+SCENARIOS = ["none", "gfs_garbage", "icon_outage", "ecmwf_outage"]
 OUT = cfg["paths"]["outputs_dir"] / "agent_stress"
 OUT.mkdir(parents=True, exist_ok=True)
 
@@ -48,6 +50,8 @@ def corrupt(rows: pd.DataFrame, scenario: str) -> pd.DataFrame:
         rows.loc[m, "wind_speed_100m"] = rows.loc[m, "wind_speed_100m"] * 2.5 + 4
     elif scenario == "icon_outage":
         rows = rows[rows["model"] != "icon_seamless"]
+    elif scenario == "ecmwf_outage":      # the main source is gone
+        rows = rows[rows["model"] != "ecmwf_ifs"]
     return rows
 
 
@@ -74,7 +78,7 @@ def main():
     modes = ["rules"] + ([] if args.no_llm or not os.getenv("OPENAI_API_KEY") else ["llm"])
 
     rows = []
-    for scenario in ["none", "gfs_garbage", "icon_outage"]:
+    for scenario in SCENARIOS:
         T.fetch_for_issue = patched_fetch(scenario)
         for d in issues:
             fetched, _ = fetch_for_issue(d, pd.Timestamp(d) + pd.Timedelta(hours=4), archive=archive)
@@ -98,7 +102,7 @@ def main():
     r = pd.DataFrame(rows)
     r.to_csv(OUT / "stress_results.csv", index=False)
     tab = r.pivot_table(index="scenario", columns="system", values="mae", aggfunc="mean") \
-        .reindex(["none", "gfs_garbage", "icon_outage"])
+        .reindex(SCENARIOS)
     tab = tab[[c for c in ["pipeline", "rules", "llm"] if c in tab.columns]]
     det = r[r["system"] != "pipeline"].groupby(["scenario", "system"])["excluded"] \
         .apply(lambda s: f"{(s != '').sum()}/{len(s)}").unstack()
@@ -109,7 +113,7 @@ def main():
              "| Сценарий | " + " | ".join(f"MAE {c}" for c in tab.columns) + " |",
              "|---|" + "---|" * len(tab.columns)]
     names = {"none": "данные исправны", "gfs_garbage": "GFS выдаёт мусор (×2.5 + 4 м/с)",
-             "icon_outage": "ICON недоступен"}
+             "icon_outage": "ICON недоступен", "ecmwf_outage": "ECMWF 9 км (главный источник) недоступен"}
     for sc, row in tab.iterrows():
         lines.append(f"| {names[sc]} | " + " | ".join(f"{v:.3f}" for v in row.values) + " |")
     lines += ["", "Сколько выпусков агент исключил хотя бы один источник:", "",

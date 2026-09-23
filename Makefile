@@ -25,8 +25,13 @@ stress:           ## fault injection: broken/missing NWP sources, pipeline vs ag
 	$(PY) scripts/agent_stress_test.py
 economics:        ## balancing-market value of the forecast (Jan 2026 rehearsal)
 	$(PY) scripts/economics_eval.py
+verify:           ## re-run all 28 February issues (deterministic agent) and compare with the reference
+	$(PY) scripts/verify.py
+figures:          ## README/slide figures from committed results
+	$(PY) scripts/make_figures.py
 demo:             ## dashboard on http://localhost:8501
 	$(PY) -m streamlit run app.py
 test:
 	$(PY) -m pytest -q
+	$(PY) scripts/verify.py
 all: eda weather baselines train forecast agent test
