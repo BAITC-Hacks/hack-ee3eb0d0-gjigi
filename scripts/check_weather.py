@@ -5,7 +5,7 @@
   2. Replay of the issue protocol over history -> data/weather/issued_forecasts.parquet
   3. Skill of each model (day D+1 vs D+2) against measured hub wind.
   4. SCADA temperature vs NWP 2 m temperature (ambient or nacelle sensor?).
-  5. Audit of runs used for every test-period issue -> outputs/weather/test_issue_runs.csv
+  5. Audit of runs used for every test-period issue -> docs/weather/test_issue_runs.csv
 
 Usage: python scripts/check_weather.py
 """

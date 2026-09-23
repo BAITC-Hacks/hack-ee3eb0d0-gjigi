@@ -6,7 +6,8 @@ paths:
   cache_dir: data/cache
   http_cache_dir: data/cache/http
   weather_dir: data/weather
-  outputs_dir: outputs
+  outputs_dir: docs              # reports, charts, logs of every stage
+  submission_dir: outputs        # ONLY the deliverable required by the task
   models_dir: models
 
 turbines:

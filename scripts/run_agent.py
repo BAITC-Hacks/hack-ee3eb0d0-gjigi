@@ -8,10 +8,10 @@ Usage:
                                                         # scored vs actual SCADA
 
 Mode auto = LLM (OpenAI) if OPENAI_API_KEY is set (e.g. in .env), otherwise rules.
-Writes outputs/agent[/_rehearsal]/:
+Writes docs/agent[_rehearsal]/ (reports) and outputs/ (deliverable):
     logs/<issue>.json            full decision log (tool, args, reasoning, result)
     agent_forecasts.csv          final forecast of every issue (plant, T1, T2)
-    agent_submission_feb2026.csv one value per hour: freshest finalized issue
+    outputs/forecast_feb2026.csv THE DELIVERABLE: every issue x 48 h, plant power forecast
     AGENT_REPORT.md              human-readable digest of decisions and notes
 """
 
@@ -74,9 +74,25 @@ def run(issues, models, mode, out_dir):
     return fc, pd.DataFrame(digest)
 
 
-def freshest(fc):
-    return (fc.sort_values("issue_date").groupby(["unit", "time_local"], as_index=False).last()
-              .sort_values(["unit", "time_local"]))
+def write_submission(fc: pd.DataFrame):
+    """The deliverable required by the task: for every daily issue, the hourly plant
+    forecast for the next 24-48 h (local days D+1, D+2). One value per hour (P50).
+    """
+    p = fc[fc["unit"] == "plant"].copy()
+    issue_local = utc_to_local(pd.to_datetime(p["final_issue_time_utc"]))
+    out = pd.DataFrame({
+        "issue_date": pd.to_datetime(p["issue_date"]).dt.date,
+        "issue_time": issue_local.dt.strftime("%Y-%m-%d %H:%M"),
+        "datetime": pd.to_datetime(p["time_local"]).dt.strftime("%Y-%m-%d %H:%M"),
+        "horizon_h": ((pd.to_datetime(p["time_local"]) - issue_local) / pd.Timedelta("1h")).round().astype(int),
+        "power_forecast": p["p50"].round(4),
+    }).sort_values(["issue_date", "datetime"])
+    d = cfg["paths"]["submission_dir"]
+    d.mkdir(parents=True, exist_ok=True)
+    path = d / "forecast_feb2026.csv"
+    out.to_csv(path, index=False)
+    assert len(out) == 48 * out["issue_date"].nunique() and out["power_forecast"].between(0, 1).all()
+    return path
 
 
 def write_report(out_dir, digest, title, scores=None):
@@ -124,7 +140,6 @@ def main():
     start, end = args.issues.split(":") if args.issues else default
     fc, digest = run(pd.date_range(start, end), models, args.mode, out_dir)
 
-    sub = freshest(fc)
     scores = None
     if args.rehearsal:
         from hackalem.data.turbines import load_hourly
@@ -138,13 +153,8 @@ def main():
                                 **interval_metrics(g["y"].to_numpy(), g["p10"].to_numpy(), g["p90"].to_numpy())}
         print(json.dumps(scores, indent=2))
     else:
-        sub = sub[sub["time_local"].between(cfg["periods"]["test_start"], cfg["periods"]["test_end"])]
-        wide = sub.pivot(index="time_local", columns="unit", values=["p50", "p10", "p90", "mean"])
-        wide.columns = [f"{u}_{v}" for v, u in wide.columns]
-        wide = wide[[f"{u}_{v}" for u in ["plant", "T1", "T2"] for v in ["p50", "p10", "p90", "mean"]]]
-        meta = sub[sub["unit"] == "plant"].set_index("time_local")[["issue_date", "final_issue_time_utc"]]
-        meta["final_issue_time_local"] = utc_to_local(meta.pop("final_issue_time_utc"))
-        meta.join(wide).reset_index().round(4).to_csv(out_dir / "agent_submission_feb2026.csv", index=False)
+        path = write_submission(fc)
+        print(f"Submission: {path}")
     write_report(out_dir, digest, "Отчёт агента" + (" — репетиция на январе 2026" if args.rehearsal else " — февраль 2026"),
                  scores)
     digest.to_csv(out_dir / "decisions.csv", index=False)

@@ -7,9 +7,9 @@ Also a January "rehearsal": the same pipeline with models trained only on data
 before 2025-12-01, scored against actual January SCADA.
 
 Usage: python scripts/run_backtest.py [--skip-rehearsal]
-Writes: outputs/forecast/
+Writes: docs/forecast/ (analysis; the deliverable is written by run_agent.py)
     forecasts_all_issues.csv     every issue x unit x hour (the full rolling record)
-    submission_feb2026.csv       one value per hour of Feb 2026: freshest issue (D+1)
+    forecast_no_agent_feb2026.csv one value per hour of Feb 2026: freshest issue (D+1), no agent
     issue_log.csv                per issue: NWP runs used, publication times
 """
 
@@ -90,7 +90,7 @@ def main():
     wide = wide[[f"{u}_{v}" for u in ["plant", "T1", "T2"] for v in ["p50", "p10", "p90", "mean"]]]
     src = sub[sub["unit"] == "plant"].set_index("time_local")[["issue_date", "horizon_h"]]
     wide = src.join(wide).reset_index()
-    wide.round(4).to_csv(OUT / "submission_feb2026.csv", index=False)
+    wide.round(4).to_csv(OUT / "forecast_no_agent_feb2026.csv", index=False)
     assert len(wide) == 28 * 24, f"expected 672 hours, got {len(wide)}"
     assert wide.filter(like="_p50").notna().all().all()
 

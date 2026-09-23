@@ -5,7 +5,7 @@
   * both targets: clean power (y_plant) and actual output incl. downtime (y_plant_raw)
 
 Usage: python scripts/run_baselines.py [--refresh]
-Writes: outputs/baselines/*
+Writes: docs/baselines/*
 """
 
 import argparse

@@ -47,16 +47,19 @@ tab1, tab2, tab3, tab4 = st.tabs(["Прогноз на февраль", "Вып�
                                   "Репетиция: январь vs факт", "Запуск агента"])
 
 with tab1:
-    sub = pd.read_csv(OUT / "agent" / "agent_submission_feb2026.csv", parse_dates=["time_local"])
+    allf = load_csv(OUT / "agent" / "agent_forecasts.csv")
     unit = st.radio("Объект", ["plant", "T1", "T2"], horizontal=True)
-    d = sub.rename(columns={f"{unit}_{q}": q for q in ["p10", "p50", "p90", "mean"]})
+    d = (allf[allf["unit"] == unit].sort_values("issue_date")
+         .groupby("time_local", as_index=False).last())
+    d = d[d["time_local"].between(cfg["periods"]["test_start"], cfg["periods"]["test_end"])]
     st.plotly_chart(band_chart(d, "time_local", f"Февраль 2026, {unit}: самый свежий прогноз агента"),
                     use_container_width=True)
     c1, c2, c3 = st.columns(3)
     c1.metric("Часов в прогнозе", len(d))
     c2.metric("Средняя ожидаемая мощность", f"{d['mean'].mean():.0%}")
     c3.metric("Средняя ширина P10–P90", f"{(d['p90'] - d['p10']).mean():.2f}")
-    st.download_button("Скачать CSV", sub.to_csv(index=False), "agent_submission_feb2026.csv")
+    sub_path = cfg["paths"]["submission_dir"] / "forecast_feb2026.csv"
+    st.download_button("Скачать файл сдачи (forecast_feb2026.csv)", sub_path.read_bytes(), sub_path.name)
 
 with tab2:
     fc = load_csv(OUT / "agent" / "agent_forecasts.csv")

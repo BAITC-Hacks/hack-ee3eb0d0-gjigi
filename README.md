@@ -8,7 +8,7 @@
 
 | Итог | Значение |
 |---|---|
-| Прогноз на тестовый период | **28 выпусков (31.01–27.02.2026) × 48 ч**, станция + T1 + T2 → [`outputs/agent/agent_submission_feb2026.csv`](outputs/agent/agent_submission_feb2026.csv) |
+| **Результат (файл сдачи)** | [`outputs/forecast_feb2026.csv`](outputs/forecast_feb2026.csv): 28 выпусков (31.01–27.02.2026) × 48 ч, почасовой прогноз выработки ВЭС |
 | Точность, репетиция на январе 2026 (модели не видели дек–янв) | **MAE 0.144** на D+1, **0.176** на D+2 (доля номинала), LLM-агент |
 | Выигрыш к классическому «NWP + кривая мощности» | **−9% MAE** (holdout дек–янв), **+6%** в среднем за 12 месяцев CV |
 | Вклад агента (пересчёт на свежем прогоне, отбраковка источников) | **−11% MAE на D+1** (0.162 → 0.144) к тому же конвейеру без агента |
@@ -61,8 +61,8 @@ flowchart LR
   - проверяет итог: пропуски, границы [0, 1], порядок квантилей, нереальные скачки, согласованность станции и турбин;
   - пишет сводку для диспетчера на русском.
 - **Страховка:** агент не может завершиться без прогноза. Если LLM не вызвала `finalize`, срабатывает резервный путь.
-- **Журнал решений:** `outputs/agent/logs/<дата>.json` (каждый шаг: инструмент, аргументы, объяснение, результат),
-  общий отчёт — [`outputs/agent/AGENT_REPORT.md`](outputs/agent/AGENT_REPORT.md).
+- **Журнал решений:** `docs/agent/logs/<дата>.json` (каждый шаг: инструмент, аргументы, объяснение, результат),
+  общий отчёт — [`docs/agent/AGENT_REPORT.md`](docs/agent/AGENT_REPORT.md).
 
 Пример (выпуск 11.02.2026, LLM):
 ```
@@ -88,7 +88,7 @@ flowchart LR
   `init_time + задержка_публикации ≤ as_of` (консервативно: ECMWF 8 ч, GFS и ICON 6 ч) — [`weather/store.py`](src/hackalem/weather/store.py).
 - **Проверки:**
   - тесты: результат не меняется, если удалить все будущие прогоны; в признаках нет данных SCADA;
-  - аудит каждого тестового выпуска с использованными прогонами — [`outputs/forecast/issue_log.csv`](outputs/forecast/issue_log.csv).
+  - аудит каждого тестового выпуска с использованными прогонами — [`docs/forecast/issue_log.csv`](docs/forecast/issue_log.csv).
 - **Обучение на тех же условиях, что и тест:** процедура выпуска воспроизведена на истории (723 выпуска с 03.2024),
   модель учится на прогнозах погоды в том виде, в каком они были доступны в момент выпуска.
 - **SCADA не используется как вход** (например, «вчерашняя мощность»): данные организаторов заканчиваются 31.01,
@@ -96,7 +96,7 @@ flowchart LR
 
 ## 4. Данные и находки
 
-Подробно — [`outputs/eda/EDA.md`](outputs/eda/EDA.md), [`outputs/weather/WEATHER.md`](outputs/weather/WEATHER.md).
+Подробно — [`docs/eda/EDA.md`](docs/eda/EDA.md), [`docs/weather/WEATHER.md`](docs/weather/WEATHER.md).
 
 - Две турбины в ~350 м друг от друга ведут себя почти одинаково (корреляция 0.997). Цель — средняя станции, плюс отдельные модели T1 и T2.
 - Очистка: простои (мощность ≈0 при ветре ≥5 м/с) и ограничения мощности (видны «полки» 0.41/0.61/0.72)
@@ -109,7 +109,7 @@ flowchart LR
 
 ## 5. Модель
 
-[`src/hackalem/models/gbm.py`](src/hackalem/models/gbm.py), отчёт — [`outputs/model/MODEL.md`](outputs/model/MODEL.md).
+[`src/hackalem/models/gbm.py`](src/hackalem/models/gbm.py), отчёт — [`docs/model/MODEL.md`](docs/model/MODEL.md).
 
 - **LightGBM, квантильная регрессия P10/P50/P90** и отдельная модель среднего. P50 оптимален для MAE, среднее — для RMSE.
 - **73 признака:** по каждой NWP-модели (ветер 10/100 м, порывы, направление, температура, плотность воздуха, сдвиг ветра, заблаговременность),
@@ -148,24 +148,31 @@ flowchart LR
 | | MAE D+1 | MAE D+2 | RMSE D+1 | Покрытие 80% D+1 / D+2 |
 |---|---|---|---|---|
 | Конвейер без агента (выпуск в 10:00) | 0.162 | 0.178 | 0.238 | 73% / 75% |
-| Агент на правилах ([отчёт](outputs/agent_rehearsal_rules/AGENT_REPORT.md)) | 0.149 | 0.180 | 0.219 | 81% / 77% |
-| **Агент на LLM, OpenAI** ([отчёт](outputs/agent_rehearsal/AGENT_REPORT.md)) | **0.144** | **0.176** | **0.211** | 78% / 75% |
+| Агент на правилах ([отчёт](docs/agent_rehearsal_rules/AGENT_REPORT.md)) | 0.149 | 0.180 | 0.219 | 81% / 77% |
+| **Агент на LLM, OpenAI** ([отчёт](docs/agent_rehearsal/AGENT_REPORT.md)) | **0.144** | **0.176** | **0.211** | 78% / 75% |
 
 Основной выигрыш агента — **пересчёт после публикации свежего прогона** (00z, в 14:00 того же дня D) и **отбраковка
 источника-выброса** (чаще всего GFS). Порог расширения интервала для агента на правилах подобран по этой же репетиции,
 поэтому его покрытие немного оптимистично. Остальные решения от январских данных не настраивались.
 
-## 7. Файлы результата
+## 7. Результат
 
-| Файл | Что внутри |
+В папке **`outputs/`** лежит только то, что требует задание, — **[`outputs/forecast_feb2026.csv`](outputs/forecast_feb2026.csv)**:
+почасовой прогноз выработки ВЭС на 24–48 ч для каждого ежедневного выпуска с 31.01 по 27.02.2026 (28 × 48 = 1344 строки).
+
+| Колонка | Смысл |
 |---|---|
-| [`outputs/agent/agent_submission_feb2026.csv`](outputs/agent/agent_submission_feb2026.csv) | **Основной результат:** 672 часа февраля, для каждого часа — самый свежий финальный прогноз агента; `plant/T1/T2 × p50/p10/p90/mean`, дата и время выпуска |
-| [`outputs/agent/agent_forecasts.csv`](outputs/agent/agent_forecasts.csv) | Все 28 выпусков агента × 48 ч × 3 объекта (полная история прогнозов по выпускам) |
-| [`outputs/forecast/submission_feb2026.csv`](outputs/forecast/submission_feb2026.csv) | Тот же конвейер без агента, строго выпуск в 10:00 |
-| [`outputs/forecast/forecasts_all_issues.csv`](outputs/forecast/forecasts_all_issues.csv) | Все выпуски без агента |
-| `outputs/agent/logs/*.json`, [`AGENT_REPORT.md`](outputs/agent/AGENT_REPORT.md) | Журнал решений агента и сводки для диспетчера |
+| `issue_date` | день выпуска D (31.01 — первый, 27.02 — последний) |
+| `issue_time` | момент выпуска по времени станции: 10:00, или время пересчёта агентом после публикации свежего прогона (тот же день D) |
+| `datetime` | прогнозируемый час (время станции, начало часа), сутки D+1 и D+2 |
+| `horizon_h` | часов от выпуска до прогнозируемого часа |
+| `power_forecast` | прогноз нормализованной активной мощности станции (среднее двух турбин, 0..1), медиана P50 |
 
-Значения — нормализованная мощность (0..1, доля номинала). `p50` — медианный прогноз (для MAE), `mean` — ожидаемое значение (для RMSE).
+Каждый час февраля покрыт двумя выпусками: за сутки (D+1) и за двое суток (D+2).
+
+Всё остальное — материалы для проверки решения в **`docs/`**: отчёты этапов (EDA, погодный архив, baselines, модель),
+журнал решений агента (`docs/agent/logs/*.json`, [`AGENT_REPORT.md`](docs/agent/AGENT_REPORT.md)), аудит прогонов NWP по выпускам,
+прогноз без агента и репетиции на январе.
 
 ## 8. Запуск
 
@@ -176,9 +183,9 @@ python3 -m pip install -r requirements.txt && python3 -m pip install -e .
 # (необязательно) LLM-агент: положите свой ключ в .env (файл в .gitignore)
 echo 'OPENAI_API_KEY=sk-...' > .env        # модель: OPENAI_MODEL, по умолчанию gpt-4o-mini
 
-make agent        # агент по февралю 2026 → outputs/agent/   (~1 мин на правилах, ~5 мин с LLM)
+make agent        # агент по февралю 2026 → outputs/forecast_feb2026.csv + журнал в docs/agent/ (~1 мин на правилах, ~5 мин с LLM)
 make rehearsal    # агент на январе 2026 + сравнение с фактом
-make forecast     # тот же прогноз без агента → outputs/forecast/
+make forecast     # тот же прогноз без агента (для сравнения) → docs/forecast/
 make test         # 12 тестов, в т.ч. на отсутствие утечки
 make demo         # дашборд Streamlit → http://localhost:8501
 ```
@@ -191,12 +198,12 @@ make demo         # дашборд Streamlit → http://localhost:8501
 
 | Этап | Команда | Результат |
 |---|---|---|
-| 0. EDA и очистка | `make eda` | `outputs/eda/` |
-| 1. Архив прогнозов погоды | `make weather` | `data/weather/`, `outputs/weather/` |
-| 2. Признаки и baselines | `make baselines` | `outputs/baselines/` |
-| 3. Модель | `make train` | `models/`, `outputs/model/` |
-| 4. Прогноз по выпускам | `make forecast` | `outputs/forecast/` |
-| 5. Агент | `make agent` / `make rehearsal` | `outputs/agent/`, `outputs/agent_rehearsal/` |
+| 0. EDA и очистка | `make eda` | `docs/eda/` |
+| 1. Архив прогнозов погоды | `make weather` | `data/weather/`, `docs/weather/` |
+| 2. Признаки и baselines | `make baselines` | `docs/baselines/` |
+| 3. Модель | `make train` | `models/`, `docs/model/` |
+| 4. Прогноз по выпускам | `make forecast` | `docs/forecast/` |
+| 5. Агент | `make agent` / `make rehearsal` | **`outputs/forecast_feb2026.csv`**, `docs/agent/`, `docs/agent_rehearsal/` |
 | 6. Демо | `make demo` | дашборд |
 
 Python ≥ 3.11. Зависимости: pandas, numpy, scikit-learn, LightGBM, pyarrow, requests, openai, python-dotenv, matplotlib, streamlit, plotly.
@@ -219,6 +226,8 @@ src/hackalem/
   agent/tools.py             инструменты агента
   agent/agent.py             LLM-агент (OpenAI) и агент на правилах
 app.py                       дашборд Streamlit
+outputs/forecast_feb2026.csv итоговый прогноз (единственный файл результата)
+docs/                        отчёты, графики, журналы агента, репетиции
 scripts/                     run_eda · build_weather_archive · check_weather · run_baselines ·
                              train_model · run_backtest · run_agent
 tests/                       12 тестов (данные, утечка, признаки, модель, агент)

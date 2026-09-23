@@ -1,7 +1,7 @@
 """Stage 0 EDA: data quality, seasonality, turbine agreement, time zone check.
 
 Usage:  python scripts/run_eda.py
-Writes: outputs/eda/*.png, outputs/eda/eda_summary.json
+Writes: docs/eda/*.png, docs/eda/eda_summary.json
 """
 
 import json
