@@ -1,0 +1,94 @@
+# Central configuration. All paths are relative to the project root.
+
+paths:
+  raw_dir: data/raw
+  processed_dir: data/processed
+  cache_dir: data/cache
+  http_cache_dir: data/cache/http
+  weather_dir: data/weather
+  outputs_dir: outputs
+
+turbines:
+  T1:
+    file: turbine_1.csv
+    lat: 43.645150
+    lon: 78.535604
+  T2:
+    file: turbine_2.csv
+    lat: 43.643198
+    lon: 78.538828
+
+# Local time zone of the SCADA timestamps (verified in EDA, see outputs/eda/EDA.md)
+timezone: Asia/Almaty
+
+periods:
+  history_start: "2023-03-11"
+  history_end: "2026-01-31 23:59"
+  test_start: "2026-02-01"
+  test_end: "2026-02-28 23:59"
+
+# Forecast issue protocol. On local day D at `issue_time_local` the system
+# forecasts local days D+1 and D+2 hour by hour (48 values).
+forecast:
+  issue_time_local: "10:00"
+  target_days: [1, 2]
+  first_issue: "2026-01-31"
+  last_issue: "2026-02-27"
+
+# SCADA timestamps are local time with a FIXED offset from UTC (no jump at the
+# 2024-03-01 Kazakhstan time-zone change, see outputs/eda/EDA.md).
+# Value confirmed in stage 1 by cross-correlation with NWP (outputs/weather/).
+scada_utc_offset_h: 5
+
+weather:
+  # Plant centroid; both turbines (~350 m apart) fall into the same NWP grid cell.
+  lat: 43.644174
+  lon: 78.537216
+  # Exact archived model runs (Open-Meteo Single Runs API).
+  single_run_models: [ecmwf_ifs]
+  single_run_hours: [0, 6, 12, 18]
+  single_run_forecast_hours: 78
+  single_run_variables:
+    - wind_speed_10m
+    - wind_speed_100m
+    - wind_direction_10m
+    - wind_direction_100m
+    - wind_gusts_10m
+    - temperature_2m
+    - surface_pressure
+    - relative_humidity_2m
+    - boundary_layer_height
+    - cape
+  # Multi-model ensemble (Open-Meteo Previous Runs API, value predicted N days
+  # before valid time; verified: init = floor_6h(valid) - N days).
+  prev_run_models: [gfs_seamless, icon_seamless, ecmwf_ifs025]
+  prev_run_days: [1, 2, 3]
+  prev_run_variables:
+    - wind_speed_10m
+    - wind_speed_100m
+    - wind_direction_10m
+    - wind_direction_100m
+    - wind_gusts_10m
+    - temperature_2m
+    - surface_pressure
+  archive_start: "2024-03-06"
+  archive_end: "2026-03-02"
+  # Hours after model initialisation before the run is assumed to be published
+  # (conservative; guarantees no look-ahead).
+  availability_delay_h:
+    ecmwf_ifs: 8
+    ecmwf_ifs025: 8
+    gfs_seamless: 6
+    icon_seamless: 6
+  request_interval_s: 0.15
+
+quality:
+  min_samples_per_hour: 4       # of 6 ten-minute samples
+  cut_in_ms: 3.5                # approximate cut-in wind speed
+  downtime_ws_ms: 5.0           # power ~0 above this speed => downtime / stop
+  downtime_power: 0.01
+  stuck_run_len: 6              # identical wind values in a row (=1 h) => frozen sensor
+  curve_bin_ms: 0.5
+  curve_mad_k: 4.0              # below-curve outlier threshold (robust z)
+
+random_state: 42

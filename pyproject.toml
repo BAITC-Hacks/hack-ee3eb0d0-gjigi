@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hackalem"
+version = "0.1.0"
+description = "Agentic AI for 24-48h hourly wind farm generation forecasting (HackAlem AI)"
+requires-python = ">=3.11"
+
+[tool.setuptools.packages.find]
+where = ["src"]
