@@ -8,3 +8,4 @@ __pycache__/
 data/processed/
 data/cache/http/
 outputs/*.log
+.claude/

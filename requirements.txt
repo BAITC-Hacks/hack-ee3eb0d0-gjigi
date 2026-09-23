@@ -10,3 +10,5 @@ pytest>=8
 lightgbm>=4.0
 openai>=1.40
 python-dotenv>=1.0
+streamlit>=1.30
+plotly>=5.0

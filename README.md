@@ -180,7 +180,11 @@ make agent        # агент по февралю 2026 → outputs/agent/   (~1
 make rehearsal    # агент на январе 2026 + сравнение с фактом
 make forecast     # тот же прогноз без агента → outputs/forecast/
 make test         # 12 тестов, в т.ч. на отсутствие утечки
+make demo         # дашборд Streamlit → http://localhost:8501
 ```
+
+**Дашборд** (`app.py`): прогноз на февраль с интервалами (станция, T1, T2); любой выпуск с журналом решений агента и сводкой
+для диспетчера; репетиция на январе против факта SCADA; **живой запуск агента** на выбранную дату (правила или LLM).
 
 **Архив погодных прогнозов (`data/weather/`) и обученные модели (`models/`) лежат в репозитории**, поэтому команды выше
 работают без интернета. Полное воспроизведение с нуля: `make all` (скачивание архива ~15 мин, обучение с CV ~20 мин).
@@ -193,8 +197,9 @@ make test         # 12 тестов, в т.ч. на отсутствие уте�
 | 3. Модель | `make train` | `models/`, `outputs/model/` |
 | 4. Прогноз по выпускам | `make forecast` | `outputs/forecast/` |
 | 5. Агент | `make agent` / `make rehearsal` | `outputs/agent/`, `outputs/agent_rehearsal/` |
+| 6. Демо | `make demo` | дашборд |
 
-Python ≥ 3.11. Зависимости: pandas, numpy, scikit-learn, LightGBM, pyarrow, requests, openai, python-dotenv, matplotlib.
+Python ≥ 3.11. Зависимости: pandas, numpy, scikit-learn, LightGBM, pyarrow, requests, openai, python-dotenv, matplotlib, streamlit, plotly.
 
 ## 9. Структура
 
@@ -213,6 +218,7 @@ src/hackalem/
   forecast.py                run_issue(): один выпуск прогноза
   agent/tools.py             инструменты агента
   agent/agent.py             LLM-агент (OpenAI) и агент на правилах
+app.py                       дашборд Streamlit
 scripts/                     run_eda · build_weather_archive · check_weather · run_baselines ·
                              train_model · run_backtest · run_agent
 tests/                       12 тестов (данные, утечка, признаки, модель, агент)

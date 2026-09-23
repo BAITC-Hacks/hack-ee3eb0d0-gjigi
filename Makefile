@@ -19,6 +19,8 @@ agent:            ## stage 5: agent over Feb 2026 (LLM if OPENAI_API_KEY in .env
 	$(PY) scripts/run_agent.py --mode auto
 rehearsal:        ## agent on Jan 2026 with models that never saw Dec-Jan, scored vs SCADA
 	$(PY) scripts/run_agent.py --mode auto --rehearsal
+demo:             ## dashboard on http://localhost:8501
+	$(PY) -m streamlit run app.py
 test:
 	$(PY) -m pytest -q
 all: eda weather baselines train forecast agent test
