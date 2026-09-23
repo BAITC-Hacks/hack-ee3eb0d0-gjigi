@@ -58,8 +58,8 @@ pytest -q
 - [x] Этап 0 — каркас проекта, очистка данных, EDA ([отчёт](outputs/eda/EDA.md))
 - [x] Этап 1 — архивные погодные прогнозы без утечки ([отчёт](outputs/weather/WEATHER.md))
 - [x] Этап 2 — признаки и базовые прогнозы ([отчёт](outputs/baselines/BASELINES.md)): лучшая базовая модель — MAE 0.192 (holdout)
-- [ ] Этап 3 — основная модель (квантили)
-- [ ] Этап 4 — rolling backtest февраля 2026
+- [x] Этап 3 — LightGBM P10/P50/P90 ([отчёт](outputs/model/MODEL.md)): MAE 0.175 на holdout (−9% к лучшему baseline)
+- [x] Этап 4 — прогноз на февраль 2026 по выпускам: `outputs/forecast/submission_feb2026.csv`
 - [ ] Этап 5 — агентный слой
 - [ ] Этап 6 — демо-дашборд
 - [ ] Этап 7 — финальный README и презентация

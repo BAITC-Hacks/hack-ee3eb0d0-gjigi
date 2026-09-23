@@ -13,20 +13,21 @@ from hackalem.weather.store import get_forecast, load_store
 
 
 def issued_forecasts(issue_dates, store: pd.DataFrame | None = None,
-                     pad_h: int = 3) -> pd.DataFrame:
+                     pad_h: int = 3, as_of_utc: pd.Timestamp | None = None) -> pd.DataFrame:
     """Long frame: issue_date, issue_time_utc, time_local, is_target, valid_time(UTC),
     model, init_time, available_at, lead_h, lead_from_issue_h, <variables...>
 
     `pad_h` extra hours on each side of the 48 target hours (is_target=False)
     let features look at neighbouring NWP hours. They come from the same
     runs, published before the issue time, so padding cannot leak.
+    `as_of_utc` overrides the protocol issue time (e.g. a later re-run).
     """
     store = load_store() if store is None else store
     off = offset()
     pad = pd.Timedelta(hours=pad_h)
     out = []
     for d in pd.DatetimeIndex(issue_dates):
-        as_of = issue_time_utc(d)
+        as_of = as_of_utc if as_of_utc is not None else issue_time_utc(d)
         target = target_hours_local(d)
         local = pd.date_range(target[0] - pad, target[-1] + pad, freq="h")
         fc = get_forecast(store, as_of, local - off)

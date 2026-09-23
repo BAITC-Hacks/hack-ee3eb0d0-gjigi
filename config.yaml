@@ -7,6 +7,7 @@ paths:
   http_cache_dir: data/cache/http
   weather_dir: data/weather
   outputs_dir: outputs
+  models_dir: models
 
 turbines:
   T1:
@@ -100,3 +101,13 @@ validation:
   cv_first_month: "2025-02"       # rolling-origin monthly folds for robustness
   cv_last_month: "2026-01"
   power_curve_min_date: "2023-03-11"   # SCADA-only curve may use pre-NWP history
+
+agent:
+  llm_model: gpt-4o-mini          # override with env OPENAI_MODEL
+  max_steps: 14
+  expected_models: [ecmwf_ifs, ecmwf_ifs025, gfs_seamless, icon_seamless]
+  outlier_model_dev_ms: 3.0       # mean |model - ensemble median| of 100 m wind
+  high_spread_ms: 2.5             # ensemble std above which a hour is "uncertain"
+  max_hourly_ramp: 0.6
+  large_revision: 0.12            # mean |Δ P50| vs previous forecast
+  update_window_h: 6              # look for NWP runs published within this window
